@@ -1,6 +1,10 @@
 package com.example.cadizaccesible.ui.screens.reports
 
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -35,7 +39,10 @@ fun PantallaDetalleIncidencia(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Detalle de la incidencia") }) }
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
+        Column(Modifier.fillMaxSize()
+            .padding(padding)
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())) {
 
             Text(incidencia.titulo, style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(8.dp))
@@ -51,6 +58,21 @@ fun PantallaDetalleIncidencia(
                 AssistChip(onClick = {}, label = { Text(incidencia.estado.name) })
                 if (incidencia.esUrgente) AssistChip(onClick = {}, label = { Text("URGENTE") })
                 if (incidencia.esObstaculoTemporal) AssistChip(onClick = {}, label = { Text("Temporal") })
+            }
+
+            if (!incidencia.fotoUri.isNullOrBlank()) {
+                Spacer(Modifier.height(12.dp))
+                Text("Foto", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+
+                AsyncImage(
+                    model = incidencia.fotoUri,
+                    contentDescription = "Foto de la incidencia",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(220.dp),
+                    contentScale = ContentScale.Crop
+                )
             }
 
             if (!esAdmin) {

@@ -10,7 +10,8 @@ import com.example.cadizaccesible.data.sesion.GestorSesion
 import kotlinx.coroutines.launch
 
 @Composable
-fun PantallaInicioCiudadano(
+fun PantallaInicioSesion(
+    irACrearIncidencia: () -> Unit,
     irAMisIncidencias: () -> Unit,
     alCerrarSesion: () -> Unit
 ) {
@@ -23,13 +24,17 @@ fun PantallaInicioCiudadano(
         Spacer(Modifier.height(12.dp))
         Text("Accede a tus incidencias y ayuda a mejorar la accesibilidad en Cadiz.")
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
+
+        Button(onClick = irACrearIncidencia, modifier = Modifier.fillMaxWidth()) {
+            Text("Crear incidencia")
+        }
 
         Button(onClick = irAMisIncidencias, modifier = Modifier.fillMaxWidth()) {
             Text("Mis incidencias")
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(20.dp))
 
         OutlinedButton(
             onClick = {

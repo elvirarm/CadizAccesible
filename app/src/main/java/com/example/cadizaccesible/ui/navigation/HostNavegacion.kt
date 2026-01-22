@@ -14,8 +14,9 @@ import com.example.cadizaccesible.ui.screens.auth.PantallaLogin
 import com.example.cadizaccesible.ui.screens.auth.PantallaRegistro
 import com.example.cadizaccesible.ui.screens.auth.PantallaSplash
 import com.example.cadizaccesible.ui.screens.home.PantallaInicioAdmin
-import com.example.cadizaccesible.ui.screens.home.PantallaInicioCiudadano
+import com.example.cadizaccesible.ui.screens.home.PantallaInicioSesion
 import com.example.cadizaccesible.ui.screens.reports.PantallaBandejaAdmin
+import com.example.cadizaccesible.ui.screens.reports.PantallaCrearIncidencia
 import com.example.cadizaccesible.ui.screens.reports.PantallaDetalleIncidencia
 import com.example.cadizaccesible.ui.screens.reports.PantallaMisIncidencias
 
@@ -26,17 +27,14 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
     val contexto = LocalContext.current
     val gestorSesion = remember { GestorSesion(contexto) }
 
-    // Sesion reactiva (sin bloquear)
     val sesion by gestorSesion.flujoSesion.collectAsState(initial = null)
-
-    // Mientras carga la sesion, mantenemos splash para evitar NPE
-    val sesionLista = sesion
 
     NavHost(
         navController = nav,
         startDestination = Rutas.Splash.ruta,
         modifier = modifier
     ) {
+
         composable(Rutas.Splash.ruta) {
             PantallaSplash(
                 irALogin = {
@@ -81,8 +79,13 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.InicioCiudadano.ruta) {
-            PantallaInicioCiudadano(
-                irAMisIncidencias = { nav.navigate(Rutas.MisIncidencias.ruta) },
+            PantallaInicioSesion(
+                irACrearIncidencia = {
+                    nav.navigate(Rutas.CrearIncidencia.ruta)
+                },
+                irAMisIncidencias = {
+                    nav.navigate(Rutas.MisIncidencias.ruta)
+                },
                 alCerrarSesion = {
                     nav.navigate(Rutas.Login.ruta) {
                         popUpTo(Rutas.InicioCiudadano.ruta) { inclusive = true }
@@ -93,7 +96,9 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
 
         composable(Rutas.InicioAdmin.ruta) {
             PantallaInicioAdmin(
-                irABandeja = { nav.navigate(Rutas.BandejaIncidencias.ruta) },
+                irABandeja = {
+                    nav.navigate(Rutas.BandejaIncidencias.ruta)
+                },
                 alCerrarSesion = {
                     nav.navigate(Rutas.Login.ruta) {
                         popUpTo(Rutas.InicioAdmin.ruta) { inclusive = true }
@@ -103,11 +108,11 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
         }
 
         composable(Rutas.MisIncidencias.ruta) {
-            if (sesionLista == null) {
+            if (sesion == null) {
                 PantallaCargandoSimple()
             } else {
                 PantallaMisIncidencias(
-                    emailUsuario = sesionLista.email,
+                    emailUsuario = sesion!!.email,
                     alAbrirDetalle = { id ->
                         nav.navigate(Rutas.DetalleIncidencia.crearRuta(id))
                     }
@@ -126,13 +131,25 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
         composable(Rutas.DetalleIncidencia.ruta) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id") ?: ""
 
-            if (sesionLista == null) {
+            if (sesion == null) {
                 PantallaCargandoSimple()
             } else {
                 PantallaDetalleIncidencia(
                     idIncidencia = id,
-                    esAdmin = sesionLista.rol == RolUsuario.ADMIN,
+                    esAdmin = sesion!!.rol == RolUsuario.ADMIN,
                     alVolver = { nav.popBackStack() }
+                )
+            }
+        }
+
+        composable(Rutas.CrearIncidencia.ruta) {
+            if (sesion == null) {
+                PantallaCargandoSimple()
+            } else {
+                PantallaCrearIncidencia(
+                    emailUsuario = sesion!!.email,
+                    alCrear = { nav.popBackStack() },
+                    alCancelar = { nav.popBackStack() }
                 )
             }
         }

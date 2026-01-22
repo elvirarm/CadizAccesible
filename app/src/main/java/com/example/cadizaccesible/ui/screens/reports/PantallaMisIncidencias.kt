@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.data.reports.Incidencia
 import com.example.cadizaccesible.data.reports.RepositorioIncidencias
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,14 +67,36 @@ private fun TarjetaIncidencia(
             Text("${incidencia.categoria} · ${incidencia.accesibilidadAfectada}")
 
             Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AssistChip(onClick = {}, label = { Text(incidencia.estado.name) })
-                if (incidencia.esUrgente) AssistChip(onClick = {}, label = { Text("URGENTE") })
-                if (incidencia.esObstaculoTemporal) AssistChip(onClick = {}, label = { Text("Temporal") })
+            Row(Modifier.padding(12.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(incidencia.titulo, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("${incidencia.categoria} · ${incidencia.accesibilidadAfectada}")
+
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AssistChip(onClick = {}, label = { Text(incidencia.estado.name) })
+                        if (incidencia.esUrgente) AssistChip(onClick = {}, label = { Text("URGENTE") })
+                        if (incidencia.esObstaculoTemporal) AssistChip(onClick = {}, label = { Text("Temporal") })
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Text(incidencia.direccionTexto, style = MaterialTheme.typography.bodySmall)
+                }
+
+                if (!incidencia.fotoUri.isNullOrBlank()) {
+                    Spacer(Modifier.width(12.dp))
+                    AsyncImage(
+                        model = incidencia.fotoUri,
+                        contentDescription = "Miniatura",
+                        modifier = Modifier
+                            .width(88.dp)
+                            .height(88.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
             }
 
-            Spacer(Modifier.height(8.dp))
-            Text(incidencia.direccionTexto, style = MaterialTheme.typography.bodySmall)
         }
     }
 }

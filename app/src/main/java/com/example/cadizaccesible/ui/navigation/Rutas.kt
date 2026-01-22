@@ -14,4 +14,7 @@ sealed class Rutas(val ruta: String) {
     data object DetalleIncidencia : Rutas("detalle_incidencia/{id}") {
         fun crearRuta(id: String) = "detalle_incidencia/$id"
     }
+
+    data object CrearIncidencia : Rutas("crear_incidencia")
+
 }
