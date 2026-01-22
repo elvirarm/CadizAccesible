@@ -18,7 +18,7 @@ fun PantallaRegistro(
 
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var contraseña by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
     var codigoAdmin by remember { mutableStateOf("") }
     var rol by remember { mutableStateOf(RolUsuario.CIUDADANO) }
 
@@ -31,8 +31,8 @@ fun PantallaRegistro(
         OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(12.dp))
         OutlinedTextField(
-            contraseña, { contraseña = it },
-            label = { Text("Contraseña") },
+            contrasena, { contrasena = it },
+            label = { Text("contrasena") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation()
         )
@@ -75,7 +75,7 @@ fun PantallaRegistro(
                 vm.registrar(
                     nombre = nombre,
                     email = email,
-                    contraseña = contraseña,
+                    contrasena = contrasena,
                     rolElegido = rol,
                     codigoAdmin = codigoAdmin,
                     alRegistrar = { volverALogin() }

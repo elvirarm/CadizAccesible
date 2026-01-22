@@ -1,6 +1,4 @@
-package com.cadizaccesible.datos.usuarios
-
-import com.example.cadizaccesible.data.users.RolUsuario
+package com.example.cadizaccesible.data.users
 
 data class UsuarioApp(
     val nombre: String,

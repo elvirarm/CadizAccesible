@@ -1,10 +1,9 @@
-package com.cadizaccesible.ui.navegacion
+package com.example.cadizaccesible.ui.navegation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import com.example.cadizaccesible.data.users.RolUsuario
-import com.example.cadizaccesible.ui.navegation.Rutas
 import com.example.cadizaccesible.ui.screens.auth.PantallaLogin
 import com.example.cadizaccesible.ui.screens.auth.PantallaRegistro
 import com.example.cadizaccesible.ui.screens.auth.PantallaSplash

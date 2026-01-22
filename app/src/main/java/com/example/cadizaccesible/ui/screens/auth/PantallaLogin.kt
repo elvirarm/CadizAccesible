@@ -18,7 +18,7 @@ fun PantallaLogin(
     val estadoUi by vm.estadoUi.collectAsState()
 
     var email by remember { mutableStateOf("") }
-    var contraseña by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Iniciar sesión", style = MaterialTheme.typography.headlineMedium)
@@ -37,9 +37,9 @@ fun PantallaLogin(
         Spacer(Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = contraseña,
-            onValueChange = { contraseña = it },
-            label = { Text("Contraseña") },
+            value = contrasena,
+            onValueChange = { contrasena = it },
+            label = { Text("contrasena") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation()
         )
@@ -52,7 +52,7 @@ fun PantallaLogin(
         Spacer(Modifier.height(16.dp))
 
         Button(
-            onClick = { vm.login(email, contraseña, alEntrar = alLoguear) },
+            onClick = { vm.login(email, contrasena, alEntrar = alLoguear) },
             modifier = Modifier.fillMaxWidth(),
             enabled = !estadoUi.cargando
         ) {

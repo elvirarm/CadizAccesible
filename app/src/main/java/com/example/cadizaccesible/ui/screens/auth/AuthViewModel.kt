@@ -3,7 +3,7 @@ package com.example.cadizaccesible.ui.screens.auth
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.cadizaccesible.datos.usuarios.RepositorioUsuarios
+import com.example.cadizaccesible.data.users.RepositorioUsuarios
 import com.example.cadizaccesible.data.sesion.GestorSesion
 import com.example.cadizaccesible.data.users.RolUsuario
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,11 +23,11 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     private val _estadoUi = MutableStateFlow(EstadoUiAuth())
     val estadoUi = _estadoUi.asStateFlow()
 
-    fun login(email: String, contraseña: String, alEntrar: (RolUsuario) -> Unit) {
+    fun login(email: String, contrasena: String, alEntrar: (RolUsuario) -> Unit) {
         _estadoUi.value = EstadoUiAuth(cargando = true)
 
         viewModelScope.launch {
-            val resultado = repositorio.iniciarSesion(email.trim(), contraseña)
+            val resultado = repositorio.iniciarSesion(email.trim(), contrasena)
             resultado.onSuccess { usuario ->
                 gestorSesion.guardarSesion(usuario.email, usuario.rol)
                 _estadoUi.value = EstadoUiAuth()
@@ -41,7 +41,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
     fun registrar(
         nombre: String,
         email: String,
-        contraseña: String,
+        contrasena: String,
         rolElegido: RolUsuario,
         codigoAdmin: String,
         alRegistrar: () -> Unit
@@ -53,7 +53,7 @@ class AuthViewModel(app: Application) : AndroidViewModel(app) {
         } else rolElegido
 
         viewModelScope.launch {
-            val resultado = repositorio.registrar(nombre.trim(), email.trim(), contraseña, rolFinal)
+            val resultado = repositorio.registrar(nombre.trim(), email.trim(), contrasena, rolFinal)
             resultado.onSuccess {
                 _estadoUi.value = EstadoUiAuth()
                 alRegistrar()
