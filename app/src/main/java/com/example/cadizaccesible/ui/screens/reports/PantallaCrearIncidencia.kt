@@ -23,9 +23,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.data.reports.Gravedad
-import com.example.cadizaccesible.data.reports.RepositorioIncidencias
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import android.Manifest
+import android.annotation.SuppressLint
+import android.location.Location
+import androidx.activity.compose.rememberLauncherForActivityResult
+import com.google.android.gms.location.LocationServices
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +67,9 @@ fun PantallaCrearIncidencia(
         }
     }
 
+
+
+
     // Selectores simples (luego los refinamos)
     val categorias = listOf("Aceras", "Rutas", "Semaforos", "Transporte", "Edificios", "Otros")
     val accesibilidades = listOf("Movilidad", "Visual", "Auditiva", "Cognitiva", "General")
@@ -74,8 +82,43 @@ fun PantallaCrearIncidencia(
     var esObstaculoTemporal by remember { mutableStateOf(false) }
 
     var direccionTexto by remember { mutableStateOf("") } // por ahora manual simple
+    var latitud by remember { mutableStateOf<Double?>(null) }
+    var longitud by remember { mutableStateOf<Double?>(null) }
+    var estadoUbicacion by remember { mutableStateOf("") }
+
 
     var error by remember { mutableStateOf("") }
+
+    val launcherPermisosUbicacion = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permisos ->
+        val concedido = (permisos[Manifest.permission.ACCESS_FINE_LOCATION] == true) ||
+                (permisos[Manifest.permission.ACCESS_COARSE_LOCATION] == true)
+
+        if (!concedido) {
+            estadoUbicacion = "Permiso de ubicacion denegado."
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    fun obtenerUbicacionActual() {
+        val cliente = LocationServices.getFusedLocationProviderClient(contexto)
+        estadoUbicacion = "Obteniendo ubicacion..."
+
+        cliente.lastLocation
+            .addOnSuccessListener { loc: Location? ->
+                if (loc != null) {
+                    latitud = loc.latitude
+                    longitud = loc.longitude
+                    estadoUbicacion = "Ubicacion guardada: %.5f, %.5f".format(latitud, longitud)
+                } else {
+                    estadoUbicacion = "No se pudo obtener la ubicacion (activa GPS e intentalo)."
+                }
+            }
+            .addOnFailureListener {
+                estadoUbicacion = "Error al obtener ubicacion."
+            }
+    }
 
     Scaffold(
         topBar = {
@@ -95,7 +138,7 @@ fun PantallaCrearIncidencia(
             OutlinedTextField(
                 value = titulo,
                 onValueChange = { titulo = it },
-                label = { Text("Titulo") },
+                label = { Text("Título") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -103,7 +146,7 @@ fun PantallaCrearIncidencia(
             OutlinedTextField(
                 value = descripcion,
                 onValueChange = { descripcion = it },
-                label = { Text("Descripcion") },
+                label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3
             )
@@ -151,14 +194,14 @@ fun PantallaCrearIncidencia(
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Switch(checked = esObstaculoTemporal, onCheckedChange = { esObstaculoTemporal = it })
                     Spacer(Modifier.width(8.dp))
-                    Text("Obstaculo temporal")
+                    Text("Obstáculo temporal")
                 }
             }
 
             OutlinedTextField(
                 value = direccionTexto,
                 onValueChange = { direccionTexto = it },
-                label = { Text("Ubicacion (calle, numero o referencia)") },
+                label = { Text("Ubicación (calle, número o referencia)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -166,6 +209,28 @@ fun PantallaCrearIncidencia(
             if (error.isNotBlank()) {
                 AssistChip(onClick = {}, label = { Text(error) })
             }
+
+            OutlinedButton(
+                onClick = {
+                    launcherPermisosUbicacion.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
+                    // Intentamos obtener ubicacion; si no hay permiso, fallara y lo veras en estadoUbicacion
+                    // (si quieres perfecto perfecto, lo hacemos condicionado, pero asi es rapido y funcional)
+                    obtenerUbicacionActual()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Usar ubicación actual")
+            }
+
+            if (estadoUbicacion.isNotBlank()) {
+                Text(estadoUbicacion, style = MaterialTheme.typography.bodySmall)
+            }
+
 
             Text("Foto (opcional)", style = MaterialTheme.typography.titleMedium)
 
@@ -176,7 +241,7 @@ fun PantallaCrearIncidencia(
 
                 OutlinedButton(
                     onClick = { launcherCamara.launch(null) }
-                ) { Text("Camara") }
+                ) { Text("Cámara") }
 
                 if (fotoUri != null) {
                     TextButton(
@@ -245,6 +310,8 @@ fun PantallaCrearIncidencia(
                             esUrgente = esUrgente,
                             esObstaculoTemporal = esObstaculoTemporal,
                             direccionTexto = dir,
+                            latitud = latitud,
+                            longitud = longitud,
                             fotoUri = fotoUri
                         )
 
@@ -253,7 +320,29 @@ fun PantallaCrearIncidencia(
                     modifier = Modifier.weight(1f)
                 ) { Text("Publicar") }
             }
+
+            OutlinedButton(
+                onClick = {
+                    launcherPermisosUbicacion.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
+                    // Intentamos obtener ubicacion; si no hay permiso, fallara y lo veras en estadoUbicacion
+                    // (si quieres perfecto perfecto, lo hacemos condicionado, pero asi es rapido y funcional)
+                    obtenerUbicacionActual()
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Usar ubicacion actual")
+            }
+
+            if (estadoUbicacion.isNotBlank()) {
+                Text(estadoUbicacion, style = MaterialTheme.typography.bodySmall)
+            }
         }
+
     }
 }
 

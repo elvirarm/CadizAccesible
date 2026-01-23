@@ -4,27 +4,50 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissValue
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.SwipeToDismiss
+import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.cadizaccesible.data.reports.EstadoIncidencia
 import com.example.cadizaccesible.data.reports.Incidencia
-import com.example.cadizaccesible.data.reports.RepositorioIncidencias
+import com.example.cadizaccesible.data.reports.RepositorioIncidenciasRoom
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun PantallaBandejaAdmin(
     alAbrirDetalle: (String) -> Unit
 ) {
-    LaunchedEffect(Unit) { RepositorioIncidencias.precargarDemoSiVacio() }
+    val contexto = LocalContext.current
+    val repo = remember { RepositorioIncidenciasRoom(contexto) }
+    val scope = rememberCoroutineScope()
 
-    val lista = remember { RepositorioIncidencias.obtenerTodas() }
+    LaunchedEffect(Unit) {
+        repo.precargarDemoSiVacio()
+    }
+
+    val lista by repo
+        .obtenerTodas()
+        .collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Bandeja de incidencias") }) }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -32,9 +55,44 @@ fun PantallaBandejaAdmin(
                 items = lista,
                 key = { it.id }
             ) { incidencia ->
-                TarjetaAdminIncidencia(
-                    incidencia = incidencia,
-                    alPulsar = { alAbrirDetalle(incidencia.id) }
+
+                val estadoSwipe = rememberDismissState(
+                    confirmStateChange = { valor ->
+                        when (valor) {
+                            DismissValue.DismissedToStart -> { // izquierda -> eliminar
+                                scope.launch { repo.eliminarIncidencia(incidencia.id) }
+                                true
+                            }
+
+                            DismissValue.DismissedToEnd -> { // derecha -> resuelta
+                                scope.launch {
+                                    repo.actualizarEstado(
+                                        id = incidencia.id,
+                                        nuevoEstado = EstadoIncidencia.RESUELTA,
+                                        comentarioAdmin = "Marcada como resuelta desde swipe."
+                                    )
+                                }
+                                true
+                            }
+
+                            else -> false
+                        }
+                    }
+                )
+
+                SwipeToDismiss(
+                    state = estadoSwipe,
+                    directions = setOf(
+                        DismissDirection.EndToStart,  // izquierda
+                        DismissDirection.StartToEnd   // derecha
+                    ),
+                    background = {},
+                    dismissContent = {
+                        TarjetaAdminIncidencia(
+                            incidencia = incidencia,
+                            alPulsar = { alAbrirDetalle(incidencia.id) }
+                        )
+                    }
                 )
             }
         }

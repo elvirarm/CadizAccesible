@@ -1,15 +1,26 @@
 package com.example.cadizaccesible.data.reports
 
-import com.example.cadizaccesible.data.reports.EstadoIncidencia
-import com.example.cadizaccesible.data.reports.Gravedad
-import com.example.cadizaccesible.data.reports.Incidencia
+import android.content.Context
+import com.example.cadizaccesible.data.db.AppDatabase
+import com.example.cadizaccesible.data.db.entities.IncidenciaEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.UUID
 
-object RepositorioIncidencias {
+class RepositorioIncidenciasRoom(contexto: Context) {
 
-    private val incidencias = mutableListOf<Incidencia>()
+    private val dao = AppDatabase.obtener(contexto).incidenciaDao()
 
-    fun crearIncidencia(
+    fun obtenerTodas(): Flow<List<Incidencia>> =
+        dao.obtenerTodas().map { lista -> lista.map { it.aModelo() } }
+
+    fun obtenerPorCreador(email: String): Flow<List<Incidencia>> =
+        dao.obtenerPorCreador(email).map { lista -> lista.map { it.aModelo() } }
+
+    suspend fun obtenerPorId(id: String): Incidencia? =
+        dao.obtenerPorId(id)?.aModelo()
+
+    suspend fun crearIncidencia(
         emailCreador: String,
         titulo: String,
         descripcion: String,
@@ -22,8 +33,8 @@ object RepositorioIncidencias {
         latitud: Double? = null,
         longitud: Double? = null,
         fotoUri: String? = null
-    ): Incidencia {
-        val nuevo = Incidencia(
+    ) {
+        val entidad = IncidenciaEntity(
             id = UUID.randomUUID().toString(),
             emailCreador = emailCreador,
             titulo = titulo,
@@ -36,41 +47,24 @@ object RepositorioIncidencias {
             direccionTexto = direccionTexto,
             latitud = latitud,
             longitud = longitud,
-            fotoUri = fotoUri
+            fotoUri = fotoUri,
+            estado = EstadoIncidencia.PENDIENTE,
+            comentarioAdmin = "",
+            fechaEpochMs = System.currentTimeMillis()
         )
-        incidencias.add(nuevo)
-        return nuevo
+        dao.insertar(entidad)
     }
 
-    fun obtenerTodas(): List<Incidencia> =
-        incidencias.sortedByDescending { it.fechaEpochMs }
-
-    fun obtenerPorCreador(email: String): List<Incidencia> =
-        incidencias
-            .filter { it.emailCreador.equals(email, ignoreCase = true) }
-            .sortedByDescending { it.fechaEpochMs }
-
-    fun obtenerPorId(id: String): Incidencia? =
-        incidencias.firstOrNull { it.id == id }
-
-    fun actualizarEstado(
-        id: String,
-        nuevoEstado: EstadoIncidencia,
-        comentarioAdmin: String = ""
-    ): Boolean {
-        val idx = incidencias.indexOfFirst { it.id == id }
-        if (idx == -1) return false
-
-        val actual = incidencias[idx]
-        incidencias[idx] = actual.copy(
-            estado = nuevoEstado,
-            comentarioAdmin = comentarioAdmin
-        )
-        return true
+    suspend fun eliminarIncidencia(id: String) {
+        dao.eliminar(id)
     }
 
-    fun precargarDemoSiVacio() {
-        if (incidencias.isNotEmpty()) return
+    suspend fun actualizarEstado(id: String, nuevoEstado: EstadoIncidencia, comentarioAdmin: String = "") {
+        dao.actualizarEstado(id, nuevoEstado, comentarioAdmin)
+    }
+
+    suspend fun precargarDemoSiVacio() {
+        if (dao.contar() > 0) return
 
         crearIncidencia(
             emailCreador = "user@demo.com",
@@ -97,3 +91,23 @@ object RepositorioIncidencias {
         )
     }
 }
+
+/** Mapeo Entity -> modelo que ya usas en UI */
+private fun IncidenciaEntity.aModelo(): Incidencia = Incidencia(
+    id = id,
+    emailCreador = emailCreador,
+    titulo = titulo,
+    descripcion = descripcion,
+    categoria = categoria,
+    accesibilidadAfectada = accesibilidadAfectada,
+    gravedad = gravedad,
+    esUrgente = esUrgente,
+    esObstaculoTemporal = esObstaculoTemporal,
+    direccionTexto = direccionTexto,
+    latitud = latitud,
+    longitud = longitud,
+    fotoUri = fotoUri,
+    estado = estado,
+    comentarioAdmin = comentarioAdmin,
+    fechaEpochMs = fechaEpochMs
+)

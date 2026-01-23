@@ -1,6 +1,9 @@
 package com.example.cadizaccesible.ui.screens.reports
 
 import coil.compose.AsyncImage
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,7 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.data.reports.EstadoIncidencia
-import com.example.cadizaccesible.data.reports.RepositorioIncidencias
+import androidx.core.net.toUri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +38,7 @@ fun PantallaDetalleIncidencia(
     }
 
     var comentarioAdmin by remember { mutableStateOf(incidencia.comentarioAdmin) }
+    val contexto = LocalContext.current
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Detalle de la incidencia") }) }
@@ -74,6 +78,32 @@ fun PantallaDetalleIncidencia(
                     contentScale = ContentScale.Crop
                 )
             }
+
+            if (incidencia.latitud != null && incidencia.longitud != null) {
+
+                Spacer(Modifier.height(16.dp))
+
+                Text(
+                    text = "Coordenadas: %.5f, %.5f".format(
+                        incidencia.latitud,
+                        incidencia.longitud
+                    ),
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                Button(
+                    onClick = {
+                        val uri =
+                            "https://www.google.com/maps/search/?api=1&query=${incidencia.latitud},${incidencia.longitud}".toUri()
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        contexto.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Abrir ubicacion en Google Maps")
+                }
+            }
+
 
             if (!esAdmin) {
                 if (incidencia.comentarioAdmin.isNotBlank()) {

@@ -14,6 +14,12 @@ fun PantallaRegistro(
     volverALogin: () -> Unit,
     vm: AuthViewModel = viewModel()
 ) {
+
+    LaunchedEffect(Unit) {
+        vm.limpiarError()
+    }
+
+
     val estadoUi by vm.estadoUi.collectAsState()
 
     var nombre by remember { mutableStateOf("") }
@@ -26,38 +32,76 @@ fun PantallaRegistro(
         Text("Registro", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
 
-        OutlinedTextField(nombre, { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(12.dp))
-        OutlinedTextField(email, { email = it }, label = { Text("Email") }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(12.dp))
         OutlinedTextField(
-            contrasena, { contrasena = it },
-            label = { Text("contrasena") },
+            value = nombre,
+            onValueChange = {
+                nombre = it
+                vm.limpiarError()
+            },
+            label = { Text("Nombre") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = {
+                email = it
+                vm.limpiarError()
+            },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+
+        OutlinedTextField(
+            value = contrasena,
+            onValueChange = {
+                contrasena = it
+                vm.limpiarError()
+            },
+            label = { Text("Contrasena") },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation()
         )
 
+
         Spacer(Modifier.height(16.dp))
+
         Text("Rol", style = MaterialTheme.typography.titleMedium)
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+
             FilterChip(
                 selected = rol == RolUsuario.CIUDADANO,
-                onClick = { rol = RolUsuario.CIUDADANO },
+                onClick = {
+                    rol = RolUsuario.CIUDADANO
+                    vm.limpiarError()
+                },
                 label = { Text("Ciudadano") }
             )
+
             FilterChip(
                 selected = rol == RolUsuario.ADMIN,
-                onClick = { rol = RolUsuario.ADMIN },
+                onClick = {
+                    rol = RolUsuario.ADMIN
+                    vm.limpiarError()
+                },
                 label = { Text("Admin") }
             )
         }
 
         if (rol == RolUsuario.ADMIN) {
-            Spacer(Modifier.height(12.dp))
             OutlinedTextField(
                 value = codigoAdmin,
-                onValueChange = { codigoAdmin = it },
+                onValueChange = {
+                    codigoAdmin = it
+                    vm.limpiarError()
+                },
                 label = { Text("Código admin (si no, serás ciudadano)") },
                 modifier = Modifier.fillMaxWidth()
             )
@@ -72,6 +116,8 @@ fun PantallaRegistro(
 
         Button(
             onClick = {
+                if (nombre.isBlank() || email.isBlank() || contrasena.isBlank()) return@Button
+
                 vm.registrar(
                     nombre = nombre,
                     email = email,
@@ -84,11 +130,24 @@ fun PantallaRegistro(
             modifier = Modifier.fillMaxWidth(),
             enabled = !estadoUi.cargando
         ) {
-            if (estadoUi.cargando) CircularProgressIndicator(strokeWidth = 2.dp)
-            else Text("Crear cuenta")
+            if (estadoUi.cargando) {
+                CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Creando...")
+            } else {
+                Text("Crear cuenta")
+            }
         }
 
         Spacer(Modifier.height(8.dp))
-        TextButton(onClick = volverALogin) { Text("Volver al login") }
-    }
+
+        TextButton(onClick = {
+            vm.limpiarError()
+            volverALogin()
+        }) {
+            Text("Volver al login")
+        }    }
 }
