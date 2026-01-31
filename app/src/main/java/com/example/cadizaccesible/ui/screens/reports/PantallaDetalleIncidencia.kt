@@ -1,19 +1,20 @@
 package com.example.cadizaccesible.ui.screens.reports
 
-import coil.compose.AsyncImage
 import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.example.cadizaccesible.data.reports.EstadoIncidencia
 import androidx.core.net.toUri
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.example.cadizaccesible.data.reports.EstadoIncidencia
+import com.example.cadizaccesible.data.reports.RepositorioIncidenciasRoom
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,53 +23,85 @@ fun PantallaDetalleIncidencia(
     esAdmin: Boolean,
     alVolver: () -> Unit
 ) {
-    val incidencia = remember(idIncidencia) {
-        RepositorioIncidencias.obtenerPorId(idIncidencia)
-    }
-
-    if (incidencia == null) {
-        Scaffold(topBar = { TopAppBar(title = { Text("Detalle") }) }) { padding ->
-            Column(Modifier.padding(padding).padding(16.dp)) {
-                Text("No se encontro la incidencia.")
-                Spacer(Modifier.height(12.dp))
-                Button(onClick = alVolver) { Text("Volver") }
-            }
-        }
-        return
-    }
-
-    var comentarioAdmin by remember { mutableStateOf(incidencia.comentarioAdmin) }
     val contexto = LocalContext.current
+
+    val repo = remember { RepositorioIncidenciasRoom(contexto) }
+
+    val vm: DetalleIncidenciaViewModel = viewModel(
+        factory = DetalleIncidenciaViewModel.Factory(repo, idIncidencia)
+    )
+
+    val state by vm.ui.collectAsState()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Detalle de la incidencia") }) }
     ) { padding ->
-        Column(Modifier.fillMaxSize()
-            .padding(padding)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())) {
+
+        if (state.cargando) {
+            Column(
+                Modifier
+                    .padding(padding)
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CircularProgressIndicator()
+                Text("Cargando…")
+                OutlinedButton(onClick = alVolver) { Text("Volver") }
+            }
+            return@Scaffold
+        }
+
+        val incidencia = state.incidencia
+        if (incidencia == null) {
+            Column(
+                Modifier
+                    .padding(padding)
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(state.error.ifBlank { "No se encontró la incidencia." })
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = { vm.cargar() }) { Text("Reintentar") }
+                    Button(onClick = alVolver) { Text("Volver") }
+                }
+            }
+            return@Scaffold
+        }
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            if (state.error.isNotBlank()) {
+                AssistChip(onClick = {}, label = { Text(state.error) })
+            }
 
             Text(incidencia.titulo, style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
             Text(incidencia.descripcion)
 
-            Spacer(Modifier.height(12.dp))
-            Text("Categoria: ${incidencia.categoria}")
+            Spacer(Modifier.height(6.dp))
+            Text("Categoría: ${incidencia.categoria}")
             Text("Accesibilidad: ${incidencia.accesibilidadAfectada}")
-            Text("Direccion: ${incidencia.direccionTexto}")
+            Text("Dirección: ${incidencia.direccionTexto}")
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AssistChip(onClick = {}, label = { Text(incidencia.estado.name) })
+                AssistChip(onClick = {}, label = { Text(incidencia.gravedad.name) })
                 if (incidencia.esUrgente) AssistChip(onClick = {}, label = { Text("URGENTE") })
                 if (incidencia.esObstaculoTemporal) AssistChip(onClick = {}, label = { Text("Temporal") })
             }
 
             if (!incidencia.fotoUri.isNullOrBlank()) {
-                Spacer(Modifier.height(12.dp))
-                Text("Foto", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
-
+                Text("Foto", style = MaterialTheme.typography.titleMedium)
                 AsyncImage(
                     model = incidencia.fotoUri,
                     contentDescription = "Foto de la incidencia",
@@ -80,98 +113,77 @@ fun PantallaDetalleIncidencia(
             }
 
             if (incidencia.latitud != null && incidencia.longitud != null) {
-
-                Spacer(Modifier.height(16.dp))
-
+                Spacer(Modifier.height(8.dp))
                 Text(
-                    text = "Coordenadas: %.5f, %.5f".format(
-                        incidencia.latitud,
-                        incidencia.longitud
-                    ),
+                    text = "Coordenadas: %.5f, %.5f".format(incidencia.latitud, incidencia.longitud),
                     style = MaterialTheme.typography.bodySmall
                 )
 
                 Button(
                     onClick = {
-                        val uri =
-                            "https://www.google.com/maps/search/?api=1&query=${incidencia.latitud},${incidencia.longitud}".toUri()
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        contexto.startActivity(intent)
+                        val uri = "https://www.google.com/maps/search/?api=1&query=${incidencia.latitud},${incidencia.longitud}".toUri()
+                        contexto.startActivity(Intent(Intent.ACTION_VIEW, uri))
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Abrir ubicacion en Google Maps")
+                    Text("Abrir ubicación en Google Maps")
                 }
             }
 
+            Spacer(Modifier.height(10.dp))
 
             if (!esAdmin) {
                 if (incidencia.comentarioAdmin.isNotBlank()) {
-                    Spacer(Modifier.height(16.dp))
                     Text("Comentario del admin:", style = MaterialTheme.typography.titleMedium)
                     Text(incidencia.comentarioAdmin)
                 }
 
-                Spacer(Modifier.height(20.dp))
-                Button(onClick = alVolver) { Text("Volver") }
+                Spacer(Modifier.height(14.dp))
+                Button(onClick = alVolver, modifier = Modifier.fillMaxWidth()) { Text("Volver") }
                 return@Column
             }
 
-            Spacer(Modifier.height(16.dp))
+            Text("Comentario del admin", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
-                value = comentarioAdmin,
-                onValueChange = { comentarioAdmin = it },
-                label = { Text("Comentario del admin") },
-                modifier = Modifier.fillMaxWidth()
+                value = state.comentarioAdmin,
+                onValueChange = vm::onComentarioAdmin,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.actualizando
             )
 
+            Spacer(Modifier.height(10.dp))
+            Text("Acciones (Admin)", style = MaterialTheme.typography.titleMedium)
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { vm.cambiarEstado(EstadoIncidencia.ACEPTADA) },
+                    enabled = !state.actualizando,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Aceptar") }
+
+                OutlinedButton(
+                    onClick = { vm.cambiarEstado(EstadoIncidencia.RECHAZADA) },
+                    enabled = !state.actualizando,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Rechazar") }
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(
+                    onClick = { vm.cambiarEstado(EstadoIncidencia.EN_REVISION) },
+                    enabled = !state.actualizando,
+                    modifier = Modifier.weight(1f)
+                ) { Text("En revisión") }
+
+                Button(
+                    onClick = { vm.cambiarEstado(EstadoIncidencia.RESUELTA) },
+                    enabled = !state.actualizando,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Resuelta") }
+            }
+
             Spacer(Modifier.height(12.dp))
-            Text("Acciones (Admin):", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = {
-                    RepositorioIncidencias.actualizarEstado(
-                        idIncidencia,
-                        EstadoIncidencia.ACEPTADA,
-                        comentarioAdmin
-                    )
-                    alVolver()
-                }) { Text("Aceptar") }
-
-                OutlinedButton(onClick = {
-                    RepositorioIncidencias.actualizarEstado(
-                        idIncidencia,
-                        EstadoIncidencia.RECHAZADA,
-                        comentarioAdmin
-                    )
-                    alVolver()
-                }) { Text("Rechazar") }
-            }
-
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = {
-                    RepositorioIncidencias.actualizarEstado(
-                        idIncidencia,
-                        EstadoIncidencia.EN_REVISION,
-                        comentarioAdmin
-                    )
-                    alVolver()
-                }) { Text("En revision") }
-
-                Button(onClick = {
-                    RepositorioIncidencias.actualizarEstado(
-                        idIncidencia,
-                        EstadoIncidencia.RESUELTA,
-                        comentarioAdmin
-                    )
-                    alVolver()
-                }) { Text("Resuelta") }
-            }
-
-            Spacer(Modifier.height(20.dp))
-            OutlinedButton(onClick = alVolver) { Text("Volver") }
+            OutlinedButton(onClick = alVolver, modifier = Modifier.fillMaxWidth()) { Text("Volver") }
         }
     }
 }

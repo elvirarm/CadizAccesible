@@ -10,7 +10,6 @@ import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.data.sesion.GestorSesion
 import com.example.cadizaccesible.data.users.RolUsuario
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 
 @Composable
 fun PantallaSplash(
@@ -20,15 +19,12 @@ fun PantallaSplash(
 ) {
     val contexto = LocalContext.current
     val gestorSesion = remember { GestorSesion(contexto) }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
-        scope.launch {
-            val sesion = gestorSesion.flujoSesion.first()
-            if (!sesion.estaLogueado) irALogin()
-            else if (sesion.rol == RolUsuario.ADMIN) irAInicioAdmin()
-            else irAInicioCiudadano()
-        }
+        val sesion = gestorSesion.flujoSesion.first()
+        if (!sesion.estaLogueado) irALogin()
+        else if (sesion.rol == RolUsuario.ADMIN) irAInicioAdmin()
+        else irAInicioCiudadano()
     }
 
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

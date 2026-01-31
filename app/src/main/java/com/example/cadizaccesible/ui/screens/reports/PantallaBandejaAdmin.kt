@@ -33,9 +33,6 @@ fun PantallaBandejaAdmin(
     val repo = remember { RepositorioIncidenciasRoom(contexto) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        repo.precargarDemoSiVacio()
-    }
 
     val lista by repo
         .obtenerTodas()

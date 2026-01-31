@@ -9,7 +9,6 @@ data class UsuarioApp(
 
 object RepositorioUsuarios {
 
-    // Lista en memoria compartida por toda la app
     private val usuarios = mutableListOf(
         UsuarioApp(
             nombre = "Admin Cádiz",

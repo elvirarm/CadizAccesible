@@ -38,14 +38,11 @@ fun PantallaMisIncidencias(
     emailUsuario: String,
     alAbrirDetalle: (String) -> Unit
 ) {
-    // 👉 ESTO ES DONDE VA EL EJEMPLO
     val contexto = LocalContext.current
     val repo = remember { RepositorioIncidenciasRoom(contexto) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        repo.precargarDemoSiVacio()
-    }
+
 
     val lista by repo
         .obtenerPorCreador(emailUsuario)

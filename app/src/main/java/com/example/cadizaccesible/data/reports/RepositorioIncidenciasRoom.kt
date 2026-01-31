@@ -59,55 +59,31 @@ class RepositorioIncidenciasRoom(contexto: Context) {
         dao.eliminar(id)
     }
 
-    suspend fun actualizarEstado(id: String, nuevoEstado: EstadoIncidencia, comentarioAdmin: String = "") {
+    suspend fun actualizarEstado(
+        id: String,
+        nuevoEstado: EstadoIncidencia,
+        comentarioAdmin: String = ""
+    ) {
         dao.actualizarEstado(id, nuevoEstado, comentarioAdmin)
     }
 
-    suspend fun precargarDemoSiVacio() {
-        if (dao.contar() > 0) return
 
-        crearIncidencia(
-            emailCreador = "user@demo.com",
-            titulo = "Coche en la acera bloqueando el paso",
-            descripcion = "Un coche esta aparcado sobre la acera y no se puede pasar con silla de ruedas.",
-            categoria = "Aceras",
-            accesibilidadAfectada = "Movilidad",
-            gravedad = Gravedad.ALTA,
-            esUrgente = true,
-            esObstaculoTemporal = true,
-            direccionTexto = "Av. principal (cerca de un paso de peatones)"
-        )
-
-        crearIncidencia(
-            emailCreador = "user@demo.com",
-            titulo = "Semaforo sin aviso sonoro",
-            descripcion = "No hay senal sonora para personas con discapacidad visual.",
-            categoria = "Semaforos",
-            accesibilidadAfectada = "Visual",
-            gravedad = Gravedad.MEDIA,
-            esUrgente = false,
-            esObstaculoTemporal = false,
-            direccionTexto = "Cruce centrico (referencia: farmacia)"
-        )
-    }
+    private fun IncidenciaEntity.aModelo(): Incidencia = Incidencia(
+        id = id,
+        emailCreador = emailCreador,
+        titulo = titulo,
+        descripcion = descripcion,
+        categoria = categoria,
+        accesibilidadAfectada = accesibilidadAfectada,
+        gravedad = gravedad,
+        esUrgente = esUrgente,
+        esObstaculoTemporal = esObstaculoTemporal,
+        direccionTexto = direccionTexto,
+        latitud = latitud,
+        longitud = longitud,
+        fotoUri = fotoUri,
+        estado = estado,
+        comentarioAdmin = comentarioAdmin,
+        fechaEpochMs = fechaEpochMs
+    )
 }
-
-/** Mapeo Entity -> modelo que ya usas en UI */
-private fun IncidenciaEntity.aModelo(): Incidencia = Incidencia(
-    id = id,
-    emailCreador = emailCreador,
-    titulo = titulo,
-    descripcion = descripcion,
-    categoria = categoria,
-    accesibilidadAfectada = accesibilidadAfectada,
-    gravedad = gravedad,
-    esUrgente = esUrgente,
-    esObstaculoTemporal = esObstaculoTemporal,
-    direccionTexto = direccionTexto,
-    latitud = latitud,
-    longitud = longitud,
-    fotoUri = fotoUri,
-    estado = estado,
-    comentarioAdmin = comentarioAdmin,
-    fechaEpochMs = fechaEpochMs
-)
