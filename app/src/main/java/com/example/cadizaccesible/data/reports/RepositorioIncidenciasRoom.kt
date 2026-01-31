@@ -86,4 +86,13 @@ class RepositorioIncidenciasRoom(contexto: Context) {
         comentarioAdmin = comentarioAdmin,
         fechaEpochMs = fechaEpochMs
     )
+
+    fun distribucionPorEstado() = dao.distribucionPorEstado()
+    fun distribucionPorGravedad() = dao.distribucionPorGravedad()
+
+    fun totalIncidencias() = dao.totalIncidencias()
+    fun totalUrgentes() = dao.totalUrgentes()
+    fun totalPorEstado(estado: EstadoIncidencia) = dao.totalPorEstado(estado)
+    fun totalPorGravedad(gravedad: Gravedad) = dao.totalPorGravedad(gravedad)
+
 }

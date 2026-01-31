@@ -19,6 +19,8 @@ import com.example.cadizaccesible.ui.screens.reports.PantallaBandejaAdmin
 import com.example.cadizaccesible.ui.screens.reports.PantallaCrearIncidencia
 import com.example.cadizaccesible.ui.screens.reports.PantallaDetalleIncidencia
 import com.example.cadizaccesible.ui.screens.reports.PantallaMisIncidencias
+import com.example.cadizaccesible.ui.screens.reports.PantallaInformes
+
 
 @Composable
 fun HostNavegacion(modifier: Modifier = Modifier) {
@@ -99,6 +101,9 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
                 irABandeja = {
                     nav.navigate(Rutas.BandejaIncidencias.ruta)
                 },
+                irAInformes = {
+                    nav.navigate(Rutas.Informes.ruta)
+                },
                 alCerrarSesion = {
                     nav.navigate(Rutas.Login.ruta) {
                         popUpTo(Rutas.InicioAdmin.ruta) { inclusive = true }
@@ -153,6 +158,13 @@ fun HostNavegacion(modifier: Modifier = Modifier) {
                 )
             }
         }
+
+        composable(Rutas.Informes.ruta) {
+            PantallaInformes(
+                alVolver = { nav.popBackStack() }
+            )
+        }
+
     }
 }
 

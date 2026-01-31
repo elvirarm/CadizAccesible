@@ -17,4 +17,9 @@ sealed class Rutas(val ruta: String) {
 
     data object CrearIncidencia : Rutas("crear_incidencia")
 
+    data object Informes : Rutas("informes")
+
+
+
+
 }

@@ -30,7 +30,6 @@ interface IncidenciaDao {
     @Query("UPDATE incidencias SET estado = :estado, comentarioAdmin = :comentario WHERE id = :id")
     suspend fun actualizarEstado(id: String, estado: EstadoIncidencia, comentario: String)
 
-    // --- INFORMES (RA5) ---
     @Query("SELECT COUNT(*) FROM incidencias")
     fun totalIncidencias(): Flow<Int>
 
@@ -45,4 +44,10 @@ interface IncidenciaDao {
 
     @Query("SELECT COUNT(*) FROM incidencias")
     suspend fun contar(): Int
+
+    @Query("SELECT estado AS estado, COUNT(*) AS total FROM incidencias GROUP BY estado")
+    fun distribucionPorEstado(): Flow<List<com.example.cadizaccesible.data.reports.ConteoEstado>>
+
+    @Query("SELECT gravedad AS gravedad, COUNT(*) AS total FROM incidencias GROUP BY gravedad")
+    fun distribucionPorGravedad(): Flow<List<com.example.cadizaccesible.data.reports.ConteoGravedad>>
 }

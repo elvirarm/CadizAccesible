@@ -9,35 +9,55 @@ import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.data.sesion.GestorSesion
 import kotlinx.coroutines.launch
 
+
 @Composable
 fun PantallaInicioAdmin(
     irABandeja: () -> Unit,
+    irAInformes: () -> Unit,
     alCerrarSesion: () -> Unit
 ) {
     val contexto = LocalContext.current
     val gestorSesion = remember { GestorSesion(contexto) }
     val scope = rememberCoroutineScope()
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Inicio (Admin)", style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(12.dp))
-        Text("Gestiona incidencias reportadas por la ciudadania.")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
-        Spacer(Modifier.height(20.dp))
+        Text("Inicio", style = MaterialTheme.typography.headlineMedium)
+        Text("Gestiona incidencias reportadas por la ciudadanía.")
 
-        Button(onClick = irABandeja, modifier = Modifier.fillMaxWidth()) {
+        Spacer(Modifier.height(8.dp))
+
+        Button(
+            onClick = irABandeja,
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Bandeja de incidencias")
         }
 
-        Spacer(Modifier.height(12.dp))
+        Button(
+            onClick = irAInformes,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Informes y estadísticas")
+        }
+
+        Spacer(Modifier.height(8.dp))
 
         OutlinedButton(
             onClick = {
-                scope.launch { gestorSesion.cerrarSesion(); alCerrarSesion() }
+                scope.launch {
+                    gestorSesion.cerrarSesion()
+                    alCerrarSesion()
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Cerrar sesion")
+            Text("Cerrar sesión")
         }
     }
 }
