@@ -1,19 +1,18 @@
 package com.example.cadizaccesible.ui.screens.reports
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalContext
 import com.example.cadizaccesible.data.reports.*
-import androidx.compose.foundation.layout.FlowRow
-
+import com.example.cadizaccesible.ui.components.GraficoBarras
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,252 +33,284 @@ fun PantallaInformes(
     val resumenFiltrado by vm.resumenFiltrado.collectAsState()
     val ui by vm.ui.collectAsState()
 
+    val porcentajeUrgentes = if (total == 0) 0 else (urgentes * 100 / total)
+
+    val kpiTotalBg = MaterialTheme.colorScheme.secondaryContainer
+    val kpiUrgBg = MaterialTheme.colorScheme.tertiaryContainer
+    val filtrosBg = MaterialTheme.colorScheme.surfaceVariant
+    val graficoBg = MaterialTheme.colorScheme.surfaceVariant
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Informes") }) }
+        contentWindowInsets = WindowInsets.safeDrawing,
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Informes") },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(16.dp)
+                .padding(14.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
-            // --- RESUMEN (RA5.b / RA5.d) ---
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                ResumenCard("Total incidencias", total.toString(), Modifier.weight(1f))
-                ResumenCard("Urgentes", urgentes.toString(), Modifier.weight(1f))
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Text("Panel de estadísticas", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Resumen de incidencias y distribución por estado/gravedad.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
-            val porcentajeUrgentes = if (total == 0) 0 else (urgentes * 100 / total)
-            Text("Urgentes: $porcentajeUrgentes%", style = MaterialTheme.typography.bodyMedium)
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                ResumenCardPro(
+                    titulo = "Total",
+                    valor = total.toString(),
+                    subtitulo = "Incidencias registradas",
+                    modifier = Modifier.weight(1f),
+                    container = kpiTotalBg
+                )
+                ResumenCardPro(
+                    titulo = "Urgentes",
+                    valor = urgentes.toString(),
+                    subtitulo = "$porcentajeUrgentes% del total",
+                    modifier = Modifier.weight(1f),
+                    container = kpiUrgBg
+                )
+            }
 
-            Divider()
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = filtrosBg
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("Filtros", style = MaterialTheme.typography.titleMedium)
 
-            // --- FILTROS (RA5.c) ---
-            Text("Filtro por estado", style = MaterialTheme.typography.titleMedium)
-            FiltroEstado(
-                seleccionado = ui.filtroEstado,
-                onSelected = { vm.setFiltroEstado(it); vm.setFiltroGravedad(null) }
-            )
+                    Text("Por estado", style = MaterialTheme.typography.bodyMedium)
+                    FiltroEstadoPro(
+                        seleccionado = ui.filtroEstado,
+                        onSelected = { vm.setFiltroEstado(it); vm.setFiltroGravedad(null) }
+                    )
 
-            Text("Filtro por gravedad", style = MaterialTheme.typography.titleMedium)
-            FiltroGravedad(
-                seleccionado = ui.filtroGravedad,
-                onSelected = { vm.setFiltroGravedad(it); vm.setFiltroEstado(null) }
-            )
+                    Text("Por gravedad", style = MaterialTheme.typography.bodyMedium)
+                    FiltroGravedadPro(
+                        seleccionado = ui.filtroGravedad,
+                        onSelected = { vm.setFiltroGravedad(it); vm.setFiltroEstado(null) }
+                    )
 
-            ResumenCard(
-                titulo = "Resultado del filtro",
-                valor = resumenFiltrado.toString(),
+                    Spacer(Modifier.height(2.dp))
+
+                    ResumenCardPro(
+                        titulo = "Resultado del filtro",
+                        valor = resumenFiltrado.toString(),
+                        subtitulo = "Incidencias que cumplen el filtro",
+                        modifier = Modifier.fillMaxWidth(),
+                        container = MaterialTheme.colorScheme.primaryContainer
+                    )
+                }
+            }
+
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = graficoBg
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("Incidencias por estado", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Distribución del estado de tramitación.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    GraficoBarras(
+                        etiquetas = EstadoIncidencia.values().map { it.textoUI() },
+                        valores = EstadoIncidencia.values().map { e ->
+                            distEstados.firstOrNull { it.estado == e }?.total ?: 0
+                        }
+                    )
+                }
+            }
+
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = graficoBg
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text("Incidencias por gravedad", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        "Nivel de impacto reportado.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    GraficoBarras(
+                        etiquetas = Gravedad.values().map { it.name },
+                        valores = Gravedad.values().map { g ->
+                            distGravedades.firstOrNull { it.gravedad == g }?.total ?: 0
+                        }
+                    )
+                }
+            }
+
+            OutlinedButton(
+                onClick = alVolver,
                 modifier = Modifier.fillMaxWidth()
-            )
+            ) { Text("Volver") }
+        }
+    }
+}
 
-            Divider()
-
-            // --- GRAFICOS (RA5.e) ---
-            Text("Incidencias por estado", style = MaterialTheme.typography.titleMedium)
-            GraficoBarras(
-                etiquetas = EstadoIncidencia.values().map { it.name },
-                valores = EstadoIncidencia.values().map { e ->
-                    distEstados.firstOrNull { it.estado == e }?.total ?: 0
-                }
-            )
-
-            Text("Incidencias por gravedad", style = MaterialTheme.typography.titleMedium)
-            GraficoBarras(
-                etiquetas = Gravedad.values().map { it.name },
-                valores = Gravedad.values().map { g ->
-                    distGravedades.firstOrNull { it.gravedad == g }?.total ?: 0
-                }
-            )
-
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = alVolver, modifier = Modifier.fillMaxWidth()) {
-                Text("Volver")
+@Composable
+private fun ResumenCardPro(
+    titulo: String,
+    valor: String,
+    subtitulo: String,
+    modifier: Modifier = Modifier,
+    container: Color
+) {
+    ElevatedCard(
+        modifier = modifier
+            .heightIn(min = 120.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = container)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(titulo, style = MaterialTheme.typography.titleMedium)
+                Text(valor, style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    subtitulo,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ResumenCard(titulo: String, valor: String, modifier: Modifier = Modifier) {
-    Card(modifier) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(titulo, style = MaterialTheme.typography.titleMedium)
-            Text(valor, style = MaterialTheme.typography.headlineMedium)
-        }
-    }
-}
-
-@Composable
-private fun FiltroEstado(
+private fun FiltroEstadoPro(
     seleccionado: EstadoIncidencia?,
     onSelected: (EstadoIncidencia?) -> Unit
 ) {
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+    )
+
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-
-        FilterChip(
+        ChipFiltro(
+            text = "Todos",
             selected = seleccionado == null,
             onClick = { onSelected(null) },
-            label = { Text("Todos") }
+            colors = chipColors
         )
 
         EstadoIncidencia.values().forEach { estado ->
-            FilterChip(
+            ChipFiltro(
+                text = estado.textoChip(),
                 selected = seleccionado == estado,
                 onClick = { onSelected(estado) },
-                label = {
-                    Text(
-                        text = estado.textoUI(),
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
+                colors = chipColors
             )
         }
     }
 }
 
-
 @Composable
-private fun FiltroGravedad(
+private fun FiltroGravedadPro(
     seleccionado: Gravedad?,
     onSelected: (Gravedad?) -> Unit
 ) {
+    val chipColors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+        selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer
+    )
+
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        FilterChip(
+        ChipFiltro(
+            text = "Todas",
             selected = seleccionado == null,
             onClick = { onSelected(null) },
-            label = { Text("Todas") }
+            colors = chipColors
         )
 
         Gravedad.values().forEach { g ->
-            FilterChip(
+            ChipFiltro(
+                text = g.name,
                 selected = seleccionado == g,
                 onClick = { onSelected(g) },
-                label = { Text(g.name) }
+                colors = chipColors
             )
         }
     }
 }
 
-
-
-
+/**
+ * ✅ Chip “pro” compatible:
+ * En tu versión, el tipo correcto es ChipColors.
+ */
 @Composable
-private fun GraficoBarras(
-    etiquetas: List<String>,
-    valores: List<Int>,
-    modifier: Modifier = Modifier.fillMaxWidth()
+private fun ChipFiltro(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    colors: SelectableChipColors
 ) {
-    val max = (valores.maxOrNull() ?: 0).coerceAtLeast(1)
-
-    val barColor = MaterialTheme.colorScheme.primary
-    val axisColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
-
-    Card(modifier) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-
-            // GRÁFICO
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp)
-            ) {
-                val w = size.width
-                val h = size.height
-
-                val leftPad = 8f
-                val rightPad = 8f
-                val topPad = 8f
-                val bottomPad = 24f   // espacio para etiquetas
-
-                val chartW = w - leftPad - rightPad
-                val chartH = h - topPad - bottomPad
-                val yBase = topPad + chartH
-
-                // Eje X
-                drawLine(
-                    color = axisColor,
-                    start = Offset(leftPad, yBase),
-                    end = Offset(leftPad + chartW, yBase),
-                    strokeWidth = 2f
-                )
-
-                fun yFor(v: Int): Float {
-                    val ratio = v.toFloat() / max.toFloat()
-                    return yBase - (ratio * chartH)
-                }
-
-                // Líneas guía
-                listOf(0, max / 2, max).distinct().forEach { m ->
-                    val y = yFor(m)
-                    drawLine(
-                        color = axisColor,
-                        start = Offset(leftPad, y),
-                        end = Offset(leftPad + chartW, y),
-                        strokeWidth = 1f
-                    )
-                }
-
-                // Barras
-                val n = valores.size.coerceAtLeast(1)
-                val gap = 6f
-                val barW = ((chartW - gap * (n + 1)) / n).coerceAtLeast(10f)
-
-                valores.forEachIndexed { i, v ->
-                    val x = leftPad + gap + i * (barW + gap)
-                    val barH = (v.toFloat() / max.toFloat()) * chartH
-
-                    drawRect(
-                        color = barColor,
-                        topLeft = Offset(x, yBase - barH),
-                        size = androidx.compose.ui.geometry.Size(barW, barH)
-                    )
-                }
-            }
-
-            // --- ETIQUETAS BAJO CADA BARRA ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                etiquetas.forEach { label ->
-                    Text(
-                        text = label.replace("_", "\n"), // EN_REVISION → EN\nREVISION
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.widthIn(min = 40.dp)
-                    )
-                }
-            }
-
-            // --- VALORES NUMÉRICOS (opcional pero recomendable) ---
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                valores.forEach { v ->
-                    Text(
-                        text = v.toString(),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(text, maxLines = 1) },
+        modifier = Modifier.heightIn(min = 36.dp),
+        colors = colors
+    )
 }
 
 private fun EstadoIncidencia.textoUI(): String =
@@ -291,3 +322,8 @@ private fun EstadoIncidencia.textoUI(): String =
         EstadoIncidencia.RECHAZADA -> "Rechazada"
     }
 
+private fun EstadoIncidencia.textoChip(): String =
+    when (this) {
+        EstadoIncidencia.EN_REVISION -> "En rev."
+        else -> textoUI()
+    }
