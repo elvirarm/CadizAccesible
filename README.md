@@ -779,7 +779,7 @@ La generación del informe es un proceso totalmente automatizado y reactivo. No 
 * **Consultas Agregadas:** En lugar de traer todas las incidencias y contarlas en memoria, utilizo el motor de SQLite para realizar el cálculo eficiente.
 * **Reactividad con Flow:** Al devolver `Flow`, cualquier cambio en la base de datos (una nueva incidencia o un cambio de estado) dispara una actualización automática en el informe sin que el usuario tenga que refrescar.
 
-```kotlin
+**```kotlin
 // IncidenciaDao.kt 
 @Query("SELECT COUNT(*) FROM incidencias WHERE urgente = 1") 
 fun getTotalUrgentes(): Flow<Int>
@@ -806,7 +806,7 @@ drawRoundRect(
     topLeft = Offset(x = posicionX, y = size.height - (valor * factorAltura)), 
     size = Size(width = anchoBarra, height = valor * factorAltura) 
 )
-📊 Matriz de Evidencias TécnicasCriterioImplementación ClaveUbicaciónEstructuraLayout jerárquico con CardsPantallaInformes.ktFuentesConsultas @Query agregadasIncidenciaDao.ktFiltrosStateFlow + FilterChipsInformesViewModel.ktCálculosOperador combine de Kotlin FlowsInformesViewModel.ktGráficosAPI Canvas y drawRoundRectGraficoBarras.ktConclusión: El bloque de informes de CádizAccesible transforma la aplicación de una simple herramienta de registro en un Sistema de Soporte a la Decisión (DSS), cumpliendo con los estándares de calidad técnica y utilidad funcional exigidos en entornos profesionales.
+📊 Matriz de Evidencias TécnicasCriterioImplementación ClaveUbicaciónEstructuraLayout jerárquico con CardsPantallaInformes.ktFuentesConsultas @Query agregadasIncidenciaDao.ktFiltrosStateFlow + FilterChipsInformesViewModel.ktCálculosOperador combine de Kotlin FlowsInformesViewModel.ktGráficosAPI Canvas y drawRoundRectGraficoBarras.ktConclusión: El bloque de informes de CádizAccesible transforma la aplicación de una simple herramienta de registro en un Sistema de Soporte a la Decisión (DSS), cumpliendo con los estándares de calidad técnica y utilidad funcional exigidos en entornos profesionales.**
 
 # 🆘 RA6 – Ayudas, Documentación y Manuales
 
