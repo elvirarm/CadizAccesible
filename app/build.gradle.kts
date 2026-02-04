@@ -74,6 +74,15 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
+// Para testear Flows/StateFlow cómodo
+    testImplementation("app.cash.turbine:turbine:1.1.0")
+
+// Mock del DAO (para no implementar toda la interfaz)
+    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
+
 
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)

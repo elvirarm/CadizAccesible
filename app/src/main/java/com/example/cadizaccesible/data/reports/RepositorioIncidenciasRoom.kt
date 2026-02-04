@@ -2,14 +2,18 @@ package com.example.cadizaccesible.data.reports
 
 import android.content.Context
 import com.example.cadizaccesible.data.db.AppDatabase
+import com.example.cadizaccesible.data.db.dao.IncidenciaDao
 import com.example.cadizaccesible.data.db.entities.IncidenciaEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
-class RepositorioIncidenciasRoom(contexto: Context) {
-
-    private val dao = AppDatabase.obtener(contexto).incidenciaDao()
+class RepositorioIncidenciasRoom(
+    private val dao: IncidenciaDao
+) {
+    constructor(contexto: Context) : this(
+        AppDatabase.obtener(contexto).incidenciaDao()
+    )
 
     fun obtenerTodas(): Flow<List<Incidencia>> =
         dao.obtenerTodas().map { lista -> lista.map { it.aModelo() } }
@@ -52,7 +56,7 @@ class RepositorioIncidenciasRoom(contexto: Context) {
             comentarioAdmin = "",
             fechaEpochMs = System.currentTimeMillis()
         )
-        dao.insertar(entidad)
+        dao.insertar(entidad) // ✅ tú ya insertas Entity, bien
     }
 
     suspend fun eliminarIncidencia(id: String) {
@@ -66,7 +70,6 @@ class RepositorioIncidenciasRoom(contexto: Context) {
     ) {
         dao.actualizarEstado(id, nuevoEstado, comentarioAdmin)
     }
-
 
     private fun IncidenciaEntity.aModelo(): Incidencia = Incidencia(
         id = id,
@@ -94,5 +97,4 @@ class RepositorioIncidenciasRoom(contexto: Context) {
     fun totalUrgentes() = dao.totalUrgentes()
     fun totalPorEstado(estado: EstadoIncidencia) = dao.totalPorEstado(estado)
     fun totalPorGravedad(gravedad: Gravedad) = dao.totalPorGravedad(gravedad)
-
 }

@@ -18,8 +18,11 @@ class InformesViewModel(
     private val _ui = MutableStateFlow(InformesUiState())
     val ui: StateFlow<InformesUiState> = _ui
 
-    fun setFiltroEstado(v: EstadoIncidencia?) = _ui.update { it.copy(filtroEstado = v) }
-    fun setFiltroGravedad(v: Gravedad?) = _ui.update { it.copy(filtroGravedad = v) }
+    fun setFiltroEstado(v: EstadoIncidencia?) =
+        _ui.update { it.copy(filtroEstado = v, filtroGravedad = null) }
+
+    fun setFiltroGravedad(v: Gravedad?) =
+        _ui.update { it.copy(filtroGravedad = v, filtroEstado = null) }
 
     val totalIncidencias =
         repo.totalIncidencias().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
@@ -32,6 +35,11 @@ class InformesViewModel(
 
     val distGravedades =
         repo.distribucionPorGravedad().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val porcentajeUrgentes =
+        combine(totalUrgentes, totalIncidencias) { urg, total ->
+            if (total == 0) 0 else (urg * 100) / total
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val resumenFiltrado =
         ui.flatMapLatest { f ->
