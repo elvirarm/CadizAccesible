@@ -764,28 +764,41 @@ En este apartado se detalla la arquitectura de persistencia y procesamiento que 
 
 ---
 
-### ✅ RA5.a — Establece la estructura del informe
-La interfaz de informes sigue un patrón de **Dashboard jerárquico**. Se ha estructurado para que la carga cognitiva sea mínima, permitiendo al administrador pasar de una visión global a una específica en segundos.
+# 🧾 RA5 – Informes y Análisis de Datos
 
-* **Bloque de Métricas (KPIs):** Situado en la parte superior para ofrecer una respuesta inmediata sobre el estado de la ciudad.
-* **Bloque de Control (Filtros):** Situado en el centro, permitiendo segmentar la realidad urbana por gravedad o estado.
-* **Bloque Visual (Gráficos):** Situado en la base, proporcionando una interpretación geométrica de los datos que facilita la detección de tendencias.
+En este apartado se detalla la arquitectura de persistencia y procesamiento que permite a **CádizAccesible** transformar registros individuales en inteligencia de gestión mediante informes dinámicos y visualizaciones personalizadas.
+
+---
+
+### ✅ RA5.a — Establece la estructura del informe
+La interfaz de informes sigue un patrón de **Dashboard jerárquico**. Se ha estructurado para que la carga cognitiva sea mínima:
+
+* **Bloque de Métricas (KPIs):** Situado en la parte superior para una respuesta inmediata sobre el estado de la ciudad.
+* **Bloque de Control (Filtros):** Situado en el centro para segmentar la realidad urbana por gravedad o estado.
+* **Bloque Visual (Gráficos):** Situado en la base para detectar tendencias mediante interpretación geométrica.
 
 ---
 
 ### ✅ RA5.b — Generación desde fuentes de datos (Persistencia Room)
-La generación del informe es un proceso totalmente automatizado y reactivo. No existe manipulación manual de datos; la UI es un reflejo directo del estado de la base de datos.
+Proceso automatizado y reactivo donde la UI es un reflejo directo de la base de datos.
 
-* **Consultas Agregadas:** En lugar de traer todas las incidencias y contarlas en memoria, utilizo el motor de SQLite para realizar el cálculo eficiente.
-* **Reactividad con Flow:** Al devolver `Flow`, cualquier cambio en la base de datos (una nueva incidencia o un cambio de estado) dispara una actualización automática en el informe sin que el usuario tenga que refrescar.
+* **Consultas Agregadas:** Uso del motor SQLite para cálculos eficientes en lugar de procesar en memoria.
+* **Reactividad con Flow:** Las actualizaciones son automáticas ante cualquier cambio en la BD.
 
-**```kotlin
-// IncidenciaDao.kt 
-@Query("SELECT COUNT(*) FROM incidencias WHERE urgente = 1") 
+```kotlin
+// IncidenciaDao.kt
+@Query("SELECT COUNT(*) FROM incidencias WHERE urgente = 1")
 fun getTotalUrgentes(): Flow<Int>
+
+@Query("SELECT COUNT(*) FROM incidencias WHERE estado = :estado")
+fun countByEstado(estado: String): Flow<Int>
 
 @Query("SELECT COUNT(*) FROM incidencias WHERE estado = :estado") 
 fun countByEstado(estado: String): Flow<Int>
+ ```
+
+---
+
 ✅ RA5.c — Establece filtros sobre los valores a presentarEl sistema de filtrado es multidimensional. El InformesViewModel combina los criterios de selección para ofrecer una vista precisa.Lógica de Filtrado: Utilizo un MutableStateFlow para capturar el filtro seleccionado.Transformación Dinámica: Mediante el operador flatMapLatest, el sistema cambia la consulta a la base de datos en tiempo real según el chip pulsado por el usuario.Kotlin// Lógica en InformesViewModel.kt 
 private val _filtroEstado = MutableStateFlow<String?>(null)
 
@@ -793,20 +806,25 @@ val incidenciasFiltradas = _filtroEstado.flatMapLatest { estado ->
     if (estado == null) repositorio.getAll() 
     else repositorio.getByEstado(estado) 
 }
-✅ RA5.d — Valores calculados, recuentos y totalesEl informe aporta valor mediante datos derivados, que son aquellos que no existen en la base de datos pero se calculan para el administrador.Recuentos Totales: Suma de incidencias por categorías específicas.Cálculos Porcentuales: Vitales para entender la gravedad relativa.Validación de Datos: Se implementa lógica para evitar divisiones por cero o estados inconsistentes cuando la base de datos está vacía.Kotlin// Cálculo de KPI reactivo 
-val porcentajeResolucion = combine(resueltas, totales) { res, tot -> 
-    if (tot == 0) 0f else (res.toFloat() / tot.toFloat()) * 100 
-}
-✅ RA5.e — Gráficos generados mediante CanvasLa visualización se realiza mediante un componente propio que demuestra el dominio de las APIs de dibujo de Android.Geometría Dinámica: El gráfico calcula el ancho de las columnas basándose en el espacio disponible (BoxWithConstraints) y la altura basándose en la proporción del valor máximo.Estética Material 3: Las barras utilizan MaterialTheme.colorScheme.primary y esquinas redondeadas para mantener la coherencia visual con el resto de la app.Kotlin// Fragmento de lógica en GraficoBarras.kt 
-val maxValor = valores.maxOrNull() ?: 1 
-val factorAltura = size.height / maxValor
 
-drawRoundRect( 
-    color = colorBarra, 
-    topLeft = Offset(x = posicionX, y = size.height - (valor * factorAltura)), 
-    size = Size(width = anchoBarra, height = valor * factorAltura) 
-)
-📊 Matriz de Evidencias TécnicasCriterioImplementación ClaveUbicaciónEstructuraLayout jerárquico con CardsPantallaInformes.ktFuentesConsultas @Query agregadasIncidenciaDao.ktFiltrosStateFlow + FilterChipsInformesViewModel.ktCálculosOperador combine de Kotlin FlowsInformesViewModel.ktGráficosAPI Canvas y drawRoundRectGraficoBarras.ktConclusión: El bloque de informes de CádizAccesible transforma la aplicación de una simple herramienta de registro en un Sistema de Soporte a la Decisión (DSS), cumpliendo con los estándares de calidad técnica y utilidad funcional exigidos en entornos profesionales.**
+✅ RA5.c — Establece filtros sobre los valores a presentar
+Sistema de filtrado multidimensional gestionado en el ViewModel.
+
+Lógica de Filtrado: Uso de MutableStateFlow para capturar la selección del usuario.
+
+Transformación Dinámica: Operador flatMapLatest para cambiar la consulta en tiempo real.
+
+```kotlin
+// Lógica en InformesViewModel.kt
+private val _filtroEstado = MutableStateFlow<String?>(null)
+
+val incidenciasFiltradas = _filtroEstado.flatMapLatest { estado -> 
+    if (estado == null) repositorio.getAll() 
+    else repositorio.getByEstado(estado) 
+}
+```
+
+---
 
 # 🆘 RA6 – Ayudas, Documentación y Manuales
 
