@@ -416,3 +416,681 @@ La estabilidad de **CádizAccesible** se debe a la integración total de estos c
 | **StatusChip** | Indicadores de estado | Feedback visual de gestión rápida. |
 | **GraficoBarras** | Dashboard Administrativo | Análisis visual de KPIs reales. |
 
+
+# RA4 – Estándares, Usabilidad y Estilo
+
+En este bloque se analiza cómo **CádizAccesible** se alinea con los estándares de diseño modernos de Android, garantizando una interfaz coherente, usable y accesible, diseñada específicamente para el ciudadano y el gestor municipal.
+
+---
+
+### ✅ Aplicación de Estándares e Interfaz (RA4.a / RA4.b)
+
+El desarrollo se ha regido por el sistema **Material Design 3 (Material You)**, asegurando una experiencia predecible y profesional.
+
+* **Consistencia y Estilo:** Se utiliza un `Scaffold` base en cada pantalla, integrando componentes oficiales como `TopAppBar`, `ElevatedCard` y `FilterChip`.
+* **Jerarquía Visual:** Aplicación estricta de la escala tipográfica (`titleLarge` para encabezados, `bodyMedium` para datos).
+* **Reflexión Crítica (RA4.b):** La elección de Material 3 es ideal para una app de servicio público porque reduce la curva de aprendizaje al usar patrones que el usuario ya conoce. Se ha priorizado la **claridad y la coherencia** frente a una personalización excesiva, garantizando que la tecnología sea inclusiva.
+
+
+
+---
+
+### ✅ Diseño de Menús y Navegación (RA4.c)
+
+En **CádizAccesible**, el sistema de menús se basa en la **eficiencia cognitiva**, evitando menús globales complejos que distraigan del objetivo principal.
+
+* **Navegación por Roles:** El "menú" principal son los Dashboards de inicio, que presentan solo las acciones relevantes para el ciudadano (Crear/Ver) o el administrador (Bandeja/Informes).
+* **TopAppBar como Orientación:** En todas las pantallas se utiliza una cabecera clara que indica al usuario dónde está y cómo volver, cumpliendo el estándar de navegación jerárquica.
+* **Menús Gestuales:** Se han integrado acciones rápidas mediante *swipe*, actuando como menús contextuales que no saturan el espacio visual.
+
+---
+
+### ✅ Distribución de Acciones y Controles (RA4.d / RA4.e)
+
+La distribución de elementos interactivos sigue una **secuencia lógica de uso** para guiar al usuario y prevenir errores.
+
+* **Flujo Natural (RA4.e):** Los controles se agrupan en `ElevatedCard` por bloques funcionales (Descripción -> Clasificación -> Multimedia). El usuario completa la tarea de arriba hacia abajo, terminando siempre en las acciones finales.
+* **Prevención de Errores (RA4.d):** Las acciones críticas (Publicar, Rechazar) están claramente separadas de las secundarias.
+    ```kotlin
+    // Prevención de errores: botón deshabilitado durante la carga
+    Button(
+        onClick = { viewModel.publicar() },
+        enabled = !state.estaPublicando // Evita duplicados (RA4.d)
+    ) {
+        if (state.estaPublicando) CircularProgressIndicator() else Text("Publicar")
+    }
+    ```
+
+---
+
+### ✅ Elección de Controles Adecuados (RA4.f)
+
+He seleccionado cada control basándome en el tipo de dato para que la interacción sea natural:
+
+* **Chips vs Desplegables:** Uso de `FilterChip` para categorías de accesibilidad, permitiendo ver todas las opciones de un vistazo.
+* **Switches:** Para valores booleanos claros como "Urgente" o "Temporal".
+* **OutlinedTextField:** Para entradas de texto, usando `singleLine` para títulos y `minLines = 3` para descripciones, delimitando claramente el área táctil.
+
+
+
+---
+
+### ✅ Diseño Visual, Estética y Legibilidad (RA4.g)
+
+El diseño visual busca que **la función prime sobre la decoración**.
+
+* **Color Semántico:** El color comunica estados sin necesidad de leer texto (Verde para "Resuelta", Rojo para "Rechazada/Error").
+* **Espaciado Uniforme:** Uso sistemático de `Arrangement.spacedBy(16.dp)` para evitar el amontonamiento visual y facilitar la pulsación.
+* **Modo Claro/Oscuro:** Implementación nativa mediante el tema global que asegura legibilidad en cualquier condición lumínica.
+    ```kotlin
+    // Uso de colores semánticos del tema (RA4.g)
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) { /* Mensaje de error */ }
+    ```
+
+---
+
+### ✅ Claridad de Mensajes y Feedback (RA4.h)
+
+La comunicación sistema-usuario es directa, humana y libre de tecnicismos innecesarios.
+
+* **Feedback de Proceso:** Mensajes descriptivos como *"Publicando incidencia..."* o *"Cargando datos..."* acompañados de indicadores de progreso.
+* **Etiquetas Claras:** Los botones usan verbos de acción directa ("Publicar", "Rechazar", "Cerrar sesión") en lugar de etiquetas ambiguas.
+* **Gestos Comunicativos:** El *swipe* no es solo un movimiento; muestra texto e iconos dinámicos mientras se realiza para confirmar la intención del usuario.
+
+| Contexto | Mensaje / Control | Propósito |
+| :--- | :--- | :--- |
+| **Error** | Card en `errorContainer` | Explicar el problema de forma no punitiva. |
+| **Carga** | `CircularProgressIndicator` | Eliminar la sensación de bloqueo. |
+| **Admin** | "Gestión (Admin)" | Delimitar acciones exclusivas de gestión. |
+| **NUI** | Texto sobre el Swipe | Confirmar la acción antes de ejecutarla. |
+
+
+
+> **Conclusión del bloque:** CádizAccesible aplica un diseño de interfaz donde cada decisión visual y de interacción tiene como objetivo final la **utilidad pública y la accesibilidad real**, cumpliendo con los estándares profesionales de desarrollo en Android.
+
+# RA4 – Estándares, Usabilidad y Estilo
+
+En este bloque se analiza cómo **CádizAccesible** se alinea con los estándares de diseño modernos de Android, garantizando una interfaz coherente, usable y accesible, diseñada específicamente para el ciudadano y el gestor municipal.
+
+---
+
+### ✅ Aplicación de Estándares e Interfaz (RA4.a / RA4.b)
+
+El desarrollo se ha regido por el sistema **Material Design 3 (Material You)**, asegurando una experiencia predecible y profesional.
+
+* **Consistencia y Estilo:** Se utiliza un `Scaffold` base en cada pantalla, integrando componentes oficiales como `TopAppBar`, `ElevatedCard` y `FilterChip`.
+* **Jerarquía Visual:** Aplicación estricta de la escala tipográfica (`titleLarge` para encabezados, `bodyMedium` para datos).
+* **Reflexión Crítica (RA4.b):** La elección de Material 3 es ideal para una app de servicio público porque reduce la curva de aprendizaje al usar patrones que el usuario ya conoce. Se ha priorizado la **claridad y la coherencia** frente a una personalización excesiva.
+
+
+
+---
+
+### ✅ Diseño de Menús y Navegación (RA4.c)
+
+En **CádizAccesible**, el sistema de menús se basa en la **eficiencia cognitiva**, evitando menús globales complejos.
+
+* **Navegación por Roles:** El "menú" principal son los Dashboards de inicio, que presentan solo las acciones relevantes para el ciudadano (Crear/Ver) o el administrador (Bandeja/Informes).
+* **TopAppBar como Orientación:** En todas las pantallas se utiliza una cabecera clara que indica al usuario dónde está y cómo volver.
+* **Menús Gestuales:** Se han integrado acciones rápidas mediante *swipe*, actuando como menús contextuales que no saturan el espacio visual.
+
+---
+
+### ✅ Distribución de Acciones y Controles (RA4.d / RA4.e)
+
+La distribución de elementos interactivos sigue una **secuencia lógica de uso** para guiar al usuario y prevenir errores.
+
+* **Flujo Natural (RA4.e):** Los controles se agrupan en `ElevatedCard` por bloques funcionales (Descripción > Clasificación > Multimedia). El usuario completa la tarea de arriba hacia abajo.
+* **Prevención de Errores (RA4.d):** Las acciones críticas están claramente separadas de las secundarias.
+    ```kotlin
+    // Prevención de errores: botón deshabilitado durante la carga
+    Button(
+        onClick = { viewModel.publicar() },
+        enabled = !state.estaPublicando // RA4.d
+    ) {
+        if (state.estaPublicando) CircularProgressIndicator() else Text("Publicar")
+    }
+    ```
+
+---
+
+### ✅ Elección de Controles Adecuados (RA4.f)
+
+He seleccionado cada control basándome en el tipo de dato para que la interacción sea natural:
+
+* **Chips vs Desplegables:** Uso de `FilterChip` para categorías, permitiendo ver todas las opciones de un vistazo.
+* **Switches:** Para valores booleanos claros como "Urgente" o "Temporal".
+* **OutlinedTextField:** Para entradas de texto, usando `singleLine` para títulos y `minLines = 3` para descripciones.
+
+---
+
+### ✅ Diseño Visual, Estética y Legibilidad (RA4.g)
+
+El diseño visual busca que **la función prime sobre la decoración**.
+
+* **Color Semántico:** El color comunica estados sin necesidad de leer texto (Verde para "Resuelta", Rojo para "Rechazada/Error").
+* **Espaciado Uniforme:** Uso sistemático de `Arrangement.spacedBy(16.dp)` para facilitar la pulsación.
+* **Modo Claro/Oscuro:** Implementación nativa mediante el tema global.
+    ```kotlin
+    // Uso de colores semánticos del tema (RA4.g)
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) { /* Mensaje de error */ }
+    ```
+
+---
+
+### ✅ Claridad de Mensajes y Feedback (RA4.h)
+
+La comunicación sistema-usuario es directa, humana y libre de tecnicismos.
+
+* **Feedback de Proceso:** Mensajes descriptivos como *"Publicando incidencia..."* acompañados de indicadores de progreso.
+* **Etiquetas Claras:** Los botones usan verbos de acción directa ("Publicar", "Rechazar", "Cerrar sesión").
+* **Gestos Comunicativos:** El *swipe* muestra texto e iconos dinámicos mientras se realiza para confirmar la intención.
+
+| Contexto | Mensaje / Control | Propósito |
+| :--- | :--- | :--- |
+| **Error** | Card en `errorContainer` | Explicar el problema de forma no punitiva. |
+| **Carga** | `CircularProgressIndicator` | Eliminar la sensación de bloqueo. |
+| **NUI** | Texto sobre el Swipe | Confirmar la acción antes de ejecutarla. |
+
+---
+
+### ✅ Pruebas de Usabilidad y Refinamiento (RA4.i)
+
+La interfaz ha sido sometida a pruebas exploratorias durante el desarrollo para validar que los flujos críticos sean comprensibles.
+
+#### 1. Validación de Flujos y Resultados
+
+| Flujo Evaluado | Aspecto Crítico | Resultado de la Prueba |
+| :--- | :--- | :--- |
+| **Crear Incidencia** | ¿Es lógico el orden de los campos? | **Éxito.** El flujo vertical por bloques permite completar el formulario sin dudas. |
+| **Mis Incidencias** | ¿Es intuitivo el gesto de borrar? | **Ajuste realizado.** Se añadió texto explicativo (*"Desliza para eliminar"*) para guiar al usuario. |
+| **Gestión Admin** | ¿Hay riesgo de error en el cambio de estado? | **Éxito.** Los colores semánticos y el feedback visual confirman la acción antes de persistirla. |
+
+#### 2. Problemas Detectados y Mejoras Aplicadas
+* **Refuerzo de Feedback:** Se implementaron estados de carga y bloqueo de botones para evitar envíos múltiples.
+* **Claridad en Clasificación:** Sustitución de listas desplegables por `FilterChips` organizados en `FlowRow` para mejorar la visibilidad.
+* **Contextualización:** Incorporación de *cards* introductorias con textos breves para explicar la finalidad de cada sección.
+
+#### 3. Reflexión Crítica y Evolución Futura
+Para una evolución profesional, se proyectan las siguientes fases:
+1.  **Pruebas de Guerrilla:** Testeo con ciudadanos reales en entornos urbanos y movilidad.
+2.  **Auditoría de Accesibilidad:** Uso de herramientas como *TalkBack* para usuarios invidentes.
+3.  **Métricas de Tarea:** Medir el tiempo de gestión para optimizar los gestos de acceso rápido.
+
+> **Conclusión:** Las pruebas de usabilidad han permitido que la aplicación pase de ser un conjunto de funciones técnicas a una herramienta orientada al ciudadano, donde el diseño acompaña al usuario y previene el error humano.
+
+# RA4 – Estándares, Usabilidad y Estilo
+
+En este bloque se analiza cómo **CádizAccesible** se alinea con los estándares de diseño modernos de Android, garantizando una interfaz coherente, usable y accesible, diseñada específicamente para el ciudadano y el gestor municipal.
+
+---
+
+### ✅ Aplicación de Estándares e Interfaz (RA4.a / RA4.b)
+
+El desarrollo se ha regido por el sistema **Material Design 3 (Material You)**, asegurando una experiencia predecible y profesional.
+
+* **Consistencia y Estilo:** Se utiliza un `Scaffold` base en cada pantalla, integrando componentes oficiales como `TopAppBar`, `ElevatedCard` y `FilterChip`.
+* **Jerarquía Visual:** Aplicación estricta de la escala tipográfica (`titleLarge` para encabezados, `bodyMedium` para datos).
+* **Reflexión Crítica (RA4.b):** La elección de Material 3 es ideal para una app de servicio público porque reduce la curva de aprendizaje al usar patrones que el usuario ya conoce. Se ha priorizado la **claridad y la coherencia** frente a una personalización excesiva.
+
+
+
+---
+
+### ✅ Diseño de Menús y Navegación (RA4.c)
+
+En **CádizAccesible**, el sistema de menús se basa en la **eficiencia cognitiva**, evitando menús globales complejos.
+
+* **Navegación por Roles:** El "menú" principal son los Dashboards de inicio, que presentan solo las acciones relevantes para el ciudadano (Crear/Ver) o el administrador (Bandeja/Informes).
+* **TopAppBar como Orientación:** En todas las pantallas se utiliza una cabecera clara que indica al usuario dónde está y cómo volver.
+* **Menús Gestuales:** Se han integrado acciones rápidas mediante *swipe*, actuando como menús contextuales que no saturan el espacio visual.
+
+---
+
+### ✅ Distribución de Acciones y Controles (RA4.d / RA4.e)
+
+La distribución de elementos interactivos sigue una **secuencia lógica de uso** para guiar al usuario y prevenir errores.
+
+* **Flujo Natural (RA4.e):** Los controles se agrupan en `ElevatedCard` por bloques funcionales (Descripción > Clasificación > Multimedia). El usuario completa la tarea de arriba hacia abajo.
+* **Prevención de Errores (RA4.d):** Las acciones críticas están claramente separadas de las secundarias.
+    ```kotlin
+    // Prevención de errores: botón deshabilitado durante la carga
+    Button(
+        onClick = { viewModel.publicar() },
+        enabled = !state.estaPublicando // RA4.d
+    ) {
+        if (state.estaPublicando) CircularProgressIndicator() else Text("Publicar")
+    }
+    ```
+
+---
+
+### ✅ Elección de Controles Adecuados (RA4.f)
+
+He seleccionado cada control basándome en el tipo de dato para que la interacción sea natural:
+
+* **Chips vs Desplegables:** Uso de `FilterChip` para categorías, permitiendo ver todas las opciones de un vistazo.
+* **Switches:** Para valores booleanos claros como "Urgente" o "Temporal".
+* **OutlinedTextField:** Para entradas de texto, usando `singleLine` para títulos y `minLines = 3` para descripciones.
+
+---
+
+### ✅ Diseño Visual, Estética y Legibilidad (RA4.g)
+
+El diseño visual busca que **la función prime sobre la decoración**.
+
+* **Color Semántico:** El color comunica estados sin necesidad de leer texto (Verde para "Resuelta", Rojo para "Rechazada/Error").
+* **Espaciado Uniforme:** Uso sistemático de `Arrangement.spacedBy(16.dp)` para facilitar la pulsación.
+* **Modo Claro/Oscuro:** Implementación nativa mediante el tema global.
+    ```kotlin
+    // Uso de colores semánticos del tema (RA4.g)
+    Card(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer
+        )
+    ) { /* Mensaje de error */ }
+    ```
+
+---
+
+### ✅ Claridad de Mensajes y Feedback (RA4.h)
+
+La comunicación sistema-usuario es directa, humana y libre de tecnicismos.
+
+* **Feedback de Proceso:** Mensajes descriptivos como *"Publicando incidencia..."* acompañados de indicadores de progreso.
+* **Etiquetas Claras:** Los botones usan verbos de acción directa ("Publicar", "Rechazar", "Cerrar sesión").
+* **Gestos Comunicativos:** El *swipe* muestra texto e iconos dinámicos mientras se realiza para confirmar la intención.
+
+| Contexto | Mensaje / Control | Propósito |
+| :--- | :--- | :--- |
+| **Error** | Card en `errorContainer` | Explicar el problema de forma no punitiva. |
+| **Carga** | `CircularProgressIndicator` | Eliminar la sensación de bloqueo. |
+| **NUI** | Texto sobre el Swipe | Confirmar la acción antes de ejecutarla. |
+
+---
+
+### ✅ Pruebas de Usabilidad y Refinamiento (RA4.i)
+
+La interfaz ha sido sometida a pruebas exploratorias durante el desarrollo para validar que los flujos críticos sean comprensibles.
+
+#### 1. Validación de Flujos y Resultados
+
+| Flujo Evaluado | Aspecto Crítico | Resultado de la Prueba |
+| :--- | :--- | :--- |
+| **Crear Incidencia** | ¿Es lógico el orden de los campos? | **Éxito.** El flujo vertical por bloques permite completar el formulario sin dudas. |
+| **Mis Incidencias** | ¿Es intuitivo el gesto de borrar? | **Ajuste realizado.** Se añadió texto explicativo (*"Desliza para eliminar"*) para guiar al usuario. |
+| **Gestión Admin** | ¿Hay riesgo de error en el cambio de estado? | **Éxito.** Los colores semánticos y el feedback visual confirman la acción antes de persistirla. |
+
+#### 2. Problemas Detectados y Mejoras Aplicadas
+* **Refuerzo de Feedback:** Se implementaron estados de carga y bloqueo de botones para evitar envíos múltiples.
+* **Claridad en Clasificación:** Sustitución de listas desplegables por `FilterChips` organizados en `FlowRow` para mejorar la visibilidad.
+* **Contextualización:** Incorporación de *cards* introductorias con textos breves para explicar la finalidad de cada sección.
+
+---
+
+### ✅ Evaluación en Distintos Dispositivos y Configuraciones (RA4.j)
+
+La interfaz ha sido diseñada bajo principios de **diseño adaptativo (Responsive Design)** para garantizar una experiencia constante en la fragmentación de dispositivos Android.
+
+* **Layouts Flexibles:** Uso de modificadores como `fillMaxWidth()`, `weight()` y contenedores dinámicos.
+* **Gestión de Pantallas Largas:** Implementación de `verticalScroll` en formularios complejos para asegurar que ningún control quede fuera del alcance en terminales pequeños.
+* **Modo Oscuro Adaptativo:** Evaluación del contraste y legibilidad en ambos temas del sistema para proteger la fatiga visual.
+* **Zonas de Pulsación:** Todos los elementos interactivos respetan el área mínima de **48x48 dp** de Material Design para facilitar el uso a personas con movilidad reducida.
+
+
+
+#### Resumen de Adaptabilidad
+
+| Configuración | Técnica de Adaptación | Resultado |
+| :--- | :--- | :--- |
+| **Resolución Variable** | Unidades DP y Layouts dinámicos | Escala de textos y botones consistente. |
+| **Pantallas Estrechas** | `FlowRow` en Chips | Redistribución automática sin cortes de texto. |
+| **Preferencia Sistema** | `darkTheme` dinámico en `AppRoot` | Adaptación de colores sin pérdida de jerarquía. |
+
+> **Conclusión:** El cumplimiento del RA4 asegura que **CádizAccesible** no es solo una aplicación funcional, sino una herramienta diseñada bajo estándares profesionales de usabilidad, estética y adaptabilidad, preparada para servir a la ciudadanía de forma inclusiva.
+
+
+🧾 RA5 – Informes y Análisis de DatosEn este apartado se detalla la arquitectura de persistencia y procesamiento que permite a CádizAccesible transformar registros individuales en inteligencia de gestión mediante informes dinámicos y visualizaciones personalizadas.✅ RA5.a — Establece la estructura del informeLa interfaz de informes sigue un patrón de Dashboard jerárquico. Se ha estructurado para que la carga cognitiva sea mínima, permitiendo al administrador pasar de una visión global a una específica en segundos.Bloque de Métricas (KPIs): Situado en la parte superior para ofrecer una respuesta inmediata sobre el estado de la ciudad.Bloque de Control (Filtros): Situado en el centro, permitiendo segmentar la realidad urbana por gravedad o estado.Bloque Visual (Gráficos): Situado en la base, proporcionando una interpretación geométrica de los datos que facilita la detección de tendencias.✅ RA5.b — Generación desde fuentes de datos (Persistencia Room)La generación del informe es un proceso totalmente automatizado y reactivo. No existe manipulación manual de datos; la UI es un reflejo directo del estado de la base de datos.Consultas Agregadas: En lugar de traer todas las incidencias y contarlas en memoria, utilizo el motor de SQLite para realizar el cálculo eficiente.Kotlin// IncidenciaDao.kt
+@Query("SELECT COUNT(*) FROM incidencias WHERE urgente = 1")
+fun getTotalUrgentes(): Flow<Int>
+
+@Query("SELECT COUNT(*) FROM incidencias WHERE estado = :estado")
+fun countByEstado(estado: String): Flow<Int>
+Reactividad con Flow: Al devolver Flow<Int>, cualquier cambio en la base de datos (una nueva incidencia o un cambio de estado) dispara una actualización automática en el informe sin que el usuario tenga que refrescar.✅ RA5.c — Establece filtros sobre los valores a presentarEl sistema de filtrado es multidimensional. El InformesViewModel combina los criterios de selección para ofrecer una vista precisa.Lógica de Filtrado: Utilizo un MutableStateFlow para capturar el filtro seleccionado.Transformación Dinámica: Mediante el operador flatMapLatest, el sistema cambia la consulta a la base de datos en tiempo real según el chip pulsado por el usuario.Kotlin// Lógica en InformesViewModel.kt
+private val _filtroEstado = MutableStateFlow<String?>(null)
+
+val incidenciasFiltradas = _filtroEstado.flatMapLatest { estado ->
+    if (estado == null) repositorio.getAll()
+    else repositorio.getByEstado(estado)
+}
+✅ RA5.d — Valores calculados, recuentos y totalesEl informe aporta valor mediante datos derivados, que son aquellos que no existen en la base de datos pero se calculan para el administrador.Recuentos Totales: Suma de incidencias por categorías específicas.Cálculos Porcentuales: Vitales para entender la gravedad relativa.Kotlin// Cálculo de KPI reactivo
+val porcentajeResolucion = combine(resueltas, totales) { res, tot ->
+    if (tot == 0) 0f else (res.toFloat() / tot.toFloat()) * 100
+}
+Validación de Datos: Se implementa lógica para evitar divisiones por cero o estados inconsistentes cuando la base de datos está vacía.✅ RA5.e — Gráficos generados mediante CanvasLa visualización se realiza mediante un componente propio que demuestra el dominio de las APIs de dibujo de Android.Geometría Dinámica: El gráfico calcula el ancho de las columnas basándose en el espacio disponible (BoxWithConstraints) y la altura basándose en la proporción del valor máximo.Estética Material 3: Las barras utilizan MaterialTheme.colorScheme.primary y esquinas redondeadas para mantener la coherencia visual con el resto de la app.Kotlin// Fragmento de lógica en GraficoBarras.kt
+val maxValor = valores.maxOrNull() ?: 1
+val factorAltura = size.height / maxValor
+
+drawRoundRect(
+    color = colorBarra,
+    topLeft = Offset(x = posicionX, y = size.height - (valor * factorAltura)),
+    size = Size(width = anchoBarra, height = valor * factorAltura)
+)
+📊 Matriz de Evidencias TécnicasCriterioImplementación ClaveUbicaciónEstructuraLayout jerárquico con CardsPantallaInformes.ktFuentesConsultas @Query agregadasIncidenciaDao.ktFiltrosStateFlow + FilterChipsInformesViewModel.ktCálculosOperador combine de Kotlin FlowsInformesViewModel.ktGráficosAPI Canvas y drawRoundRectGraficoBarras.ktConclusión: El bloque de informes de CádizAccesible transforma la aplicación de una simple herramienta de registro en un Sistema de Soporte a la Decisión (DSS), cumpliendo con los estándares de calidad técnica y utilidad funcional exigidos en entornos profesionales.
+
+# 🆘 RA6 – Ayudas, Documentación y Manuales
+
+En **CádizAccesible**, el sistema de ayudas y documentación se aborda desde un enfoque integrado en la interfaz, complementado con documentación técnica y manuales externos, siguiendo los estándares de profesionalidad de las aplicaciones móviles modernas.
+
+---
+
+### ✅ Identificación y Generación de Ayudas (RA6.a / RA6.b)
+
+La aplicación utiliza un sistema de ayuda **multiformato** que garantiza que el usuario nunca se encuentre ante una pantalla sin orientación.
+
+* **Sistemas Identificados (RA6.a):** Se diferencian claramente las ayudas internas (*In-App*) de la documentación técnica externa. Las ayudas internas incluyen etiquetas descriptivas, mensajes de estado y placeholders informativos.
+* **Formatos Habituales (RA6.b):** Siguiendo las guías de **Material Design 3**, las ayudas se presentan de forma visualmente coherente:
+    * **Tarjetas informativas:** Bloques de texto integrados en `ElevatedCard` que explican la finalidad de secciones como "Informes" o "Nueva Incidencia".
+    * **Indicaciones de acción:** Verbos directos y breves que guían la interacción (ej. *"Describe el problema"*, *"Gestión rápida"*).
+    * **Feedback de estado:** Mensajes de confirmación y carga que mantienen al usuario informado del proceso actual.
+
+
+
+---
+
+### ✅ Ayudas Sensibles al Contexto (RA6.c)
+
+La aplicación implementa **lógica condicional** para mostrar ayudas que dependen exclusivamente del estado y el rol del usuario:
+
+* **Estados Vacíos:** Si el ciudadano no tiene reportes, la pantalla muestra un mensaje dinámico: *"Cuando crees una incidencia, aparecerá aquí"*.
+* **Instrucciones por Gesto:** Las indicaciones de *swipe* solo se muestran en las pantallas donde dicha interacción es funcional (Bandeja Admin y Mis Incidencias).
+* **Diferenciación de Roles:** El administrador visualiza bloques de ayuda específicos para la gestión de estados que el ciudadano no visualiza, evitando ruido visual innecesario.
+
+---
+
+### ✅ Documentación de la Persistencia (RA6.d)
+
+Para asegurar la escalabilidad del proyecto, se ha documentado la estructura de la información persistente gestionada con **Room**:
+
+* **Entidades:** Documentación técnica de `IncidenciaEntity` y `UsuarioEntity`, detallando claves primarias y tipos de datos.
+* **DAO (Data Access Object):** Definición de las consultas SQL que alimentan los informes y listados.
+* **Flujo de Datos:** Explicación del patrón **Repository** como capa intermedia para garantizar la integridad de los datos.
+
+
+
+---
+
+### ✅ Manuales de Usuario y Técnico (RA6.e / RA6.f)
+
+Se han confeccionado dos guías diferenciadas integradas en el repositorio:
+
+1.  **Manual de Usuario (RA6.e):** Guía funcional escrita en lenguaje no técnico. Explica los flujos de inicio de sesión, creación de reportes mediante voz e interpretación de los gráficos de informes.
+2.  **Manual Técnico (RA6.f):** Orientado a desarrolladores. Detalla la arquitectura **MVVM**, la configuración del entorno en Android Studio, la gestión de dependencias en Gradle y el esquema de la base de datos local.
+
+---
+
+### ✅ Tutoriales Progresivos (RA6.g)
+
+En lugar de manuales densos, **CádizAccesible** utiliza el concepto de **onboarding implícito**:
+
+* **Guías Paso a Paso:** La distribución de los controles en los formularios actúa como un tutorial visual, guiando al usuario desde la descripción hasta la publicación.
+* **Ayudas Visuales Directas:** El uso de iconos combinados con texto y colores semánticos permite que el usuario "aprenda haciendo", reforzando la autonomía y reduciendo la tasa de abandono de la aplicación.
+
+---
+
+### 📊 Matriz de Documentación y Ayudas
+
+| Criterio | Tipo de Ayuda | Ubicación / Archivo |
+| :--- | :--- | :--- |
+| **RA6.c** | Ayuda Contextual | `PantallaMisIncidencias.kt` |
+| **RA6.d** | Persistencia | `IncidenciaEntity.kt` / `AppDatabase.kt` |
+| **RA6.e** | Manual Usuario | `README.md` (Sección Usuario) |
+| **RA6.f** | Manual Técnico | `README.md` (Sección Técnica) |
+| **RA6.g** | Tutorial | Flujo de `PantallaCrearIncidencia.kt` |
+
+> **Conclusión:** El sistema de documentación de **CádizAccesible** (RA6) garantiza que el producto sea **mantenible para el equipo técnico** y **fácil de adoptar para el ciudadano**, cumpliendo con los estándares de rigor y claridad exigidos en un entorno profesional.
+
+# 🧪 RA8 – Pruebas y Control de Calidad
+
+En el proyecto **CádizAccesible**, la estrategia de pruebas se ha planteado de forma realista y coherente con el alcance del proyecto, combinando pruebas manuales, pruebas de integración funcional y documentación de resultados, siguiendo un enfoque habitual en proyectos profesionales de aplicaciones móviles.
+
+---
+
+### ✅ Estrategia de Pruebas (RA8.a)
+
+El proyecto cuenta con una estrategia de pruebas claramente definida, orientada a validar el correcto funcionamiento de la aplicación desde el punto de vista del usuario ciudadano y del administrador.
+
+* **Enfoque de la estrategia:**
+    * **Pruebas por rol:** Validación de flujos específicos para Ciudadanos (reporte) y Administradores (gestión).
+    * **Pruebas por flujo:** Recorrido completo desde la creación, consulta, hasta la gestión y generación de informes.
+    * **Pruebas de estados:** Verificación de estados vacíos, indicadores de carga y gestión de errores.
+* **Justificación técnica:** Se ha optado por un enfoque funcional manual para asegurar que la **experiencia de usuario (UX)** y la **interfaz (UI)** sean fluidas, algo crítico en una app de servicio público.
+
+
+
+---
+
+### ✅ Pruebas de Integración Funcional (RA8.b)
+
+Se han realizado pruebas de integración para verificar que los distintos módulos de la arquitectura trabajan correctamente de forma conjunta, validando el flujo completo de datos: **Interfaz → ViewModel → Repositorio → Room → UI**.
+
+* **Integraciones verificadas:**
+    * **UI + ViewModel:** Comprobación de que los filtros, cambios de estado y clics disparan la lógica correcta.
+    * **ViewModel + Room:** Validación de que la persistencia es efectiva y los recuentos de informes son exactos.
+    * **Navegación + Sesión:** Control de rutas protegidas y acceso según el rol de usuario.
+    * **Componentes Reutilizables:** Verificación de que tarjetas, chips y gráficos se renderizan correctamente con datos reales.
+
+
+
+---
+
+### ✅ Documentación de Resultados (RA8.g)
+
+Las pruebas realizadas están documentadas de forma clara, permitiendo comprobar el proceso seguido y la fiabilidad del sistema.
+
+#### 📋 Tabla de Casos de Prueba Funcionales
+
+| Caso de Prueba | Acción Realizada | Resultado Esperado | Resultado Obtenido |
+| :--- | :--- | :--- | :--- |
+| **Alta de Incidencia** | Formulario completo + Foto | Registro en Room y aviso de éxito | **CORRECTO** |
+| **Gesto de Borrado** | Swipe en "Mis Incidencias" | Eliminación del registro en BD | **CORRECTO** |
+| **Gestión Admin** | Cambiar estado vía Swipe | Actualización inmediata en lista | **CORRECTO** |
+| **Filtros Informes** | Cambiar Gravedad/Estado | Gráfico de Canvas se redibuja | **CORRECTO** |
+
+---
+
+### 🔮 Reflexión y Evolución Futura
+
+El enfoque manual actual es defendible y coherente con un proyecto centrado en el **Diseño de Interfaces**. No obstante, la arquitectura robusta de la app permite una evolución hacia:
+1.  **Tests Instrumentados:** Implementación de JUnit y Compose Test para automatizar flujos críticos.
+2.  **Pruebas de ViewModel:** Validar la lógica de negocio de forma aislada.
+3.  **Informes Automáticos:** Generación de reportes de test tras cada despliegue.
+
+> **Conclusión:** El RA8 cumple con los requisitos de la rúbrica mediante una metodología que garantiza que **CádizAccesible** es una herramienta robusta, predecible y preparada para su uso en un entorno profesional.
+
+
+# 📊 RA5 – Informes e Inteligencia de Datos (Incluye FFOE)
+
+Este apartado detalla la implementación del sistema de análisis de datos de **CádizAccesible**, diseñado para que el administrador pueda monitorizar el estado de la ciudad mediante métricas reactivas y visualizaciones personalizadas integradas nativamente.
+
+---
+
+### ✅ Estructura y Generación de Informes (RA5.a / RA5.b)
+
+El informe en **CádizAccesible** no es un documento estático, sino una herramienta de análisis integrada y alimentada en tiempo real por la base de datos **Room**.
+
+* **Estructura Profesional (RA5.a):** La información se organiza de forma jerárquica:
+    * **KPIs (Indicadores Clave):** Resumen numérico de incidencias totales y urgentes en la cabecera.
+    * **Filtros Interactivos:** Segmentación por estado y gravedad mediante `FilterChips`.
+    * **Visualización:** Gráficos de barras que representan la distribución de datos de forma geométrica.
+* **Fuentes de Datos Reales (RA5.b):** Los informes se generan dinámicamente siguiendo el patrón **SSOT (Single Source of Truth)** desde Room hacia la UI mediante `Flow`.
+
+
+
+---
+
+### ✅ Filtros, Cálculos y Totales (RA5.c / RA5.d)
+
+Para que el informe sea útil en la toma de decisiones, se han implementado mecanismos de filtrado y lógica de cálculo avanzada.
+
+* **Interactividad con Filtros (RA5.c):** El uso de `flatMapLatest` en el ViewModel permite que el sistema cambie la consulta a la base de datos en tiempo real según la selección del usuario, sin recargar la pantalla.
+* **Valores Calculados y Derivados (RA5.d):** Se realizan recuentos automáticos y cálculos de impacto.
+    ```kotlin
+    // Cálculo de KPI reactivo en InformesViewModel.kt
+    val porcentajeUrgentes = combine(totalUrgentes, totalIncidencias) { urg, total ->
+        if (total == 0) 0 else (urg * 100) / total
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+    ```
+
+---
+
+### ✅ Gráficos Generados a Medida con Canvas (RA5.e)
+
+La visualización se realiza mediante un componente propio desarrollado con la **API de Canvas**, demostrando dominio sobre el dibujo técnico en Android.
+
+* **Escalado Dinámico:** Las barras ajustan su altura automáticamente basándose en el valor máximo del set de datos.
+* **Estética Material 3:** Integración total con los colores del tema y soporte para etiquetas dinámicas.
+
+
+
+---
+
+### 🏢 Evaluación Complementaria FFOE (RA5.f / RA5.g / RA5.h)
+
+Estos criterios confirman la madurez profesional del sistema de informes integrado.
+
+* **Uso de Herramientas Profesionales (RA5.f):** Se justifica el uso de **Room**, **StateFlow** y **Jetpack Compose** frente a herramientas externas para garantizar actualización en tiempo real y un control total sobre la accesibilidad visual.
+* **Modificación y Evolución del Código (RA5.g):** El código se ha evolucionado conscientemente, separando la lógica de cálculo en un ViewModel específico y optimizando las consultas SQL para agrupaciones de datos (`GROUP BY`).
+* **Integración Total y Coherente (RA5.h):** Los informes no son una sección aislada; están protegidos por el sistema de roles en `HostNavegacion.kt` y respetan la jerarquía visual de la aplicación, siendo accesibles exclusivamente para el perfil administrador.
+
+---
+
+### 📁 Matriz de Evidencias Técnicas
+
+| Criterio | Implementación Clave | Ubicación |
+| :--- | :--- | :--- |
+| **Generación** | Consultas SQL agregadas | `IncidenciaDao.kt` |
+| **Filtros** | `StateFlow` + `flatMapLatest` | `InformesViewModel.kt` |
+| **Gráficos** | API `Canvas` personalizada | `GraficoBarras.kt` |
+| **Integración** | Navegación por roles | `HostNavegacion.kt` |
+
+> **Conclusión del RA5:** El sistema de informes de **CádizAccesible** transforma la aplicación en una herramienta de gestión urbana profesional, ofreciendo una experiencia reactiva, visualmente clara y técnicamente robusta.
+
+
+# 📦 RA7 – Distribución de Aplicaciones (Estrategia de Despliegue)
+
+Este bloque detalla el plan técnico para la distribución profesional de **CádizAccesible**. Aunque el proyecto se encuentra actualmente en fase de evaluación técnica, se ha diseñado siguiendo los estándares necesarios para un despliegue real en el ecosistema Android, asegurando la integridad, seguridad y accesibilidad del software.
+
+---
+
+### ✅ Empaquetado y Firma Digital (RA7.a, RA7.c, RA7.e)
+
+Para que la aplicación pueda distribuirse en dispositivos finales, es imperativo realizar un empaquetado profesional que garantice la identidad del autor y la integridad del código.
+
+**Plan de implementación profesional:**
+1.  **Generación del Almacén de Claves (KeyStore):** El primer paso consiste en crear un archivo `.jks` (Java KeyStore) protegido por contraseña. Este archivo contiene la clave privada con la que se firma la aplicación.
+2.  **Firma del Paquete:** Mediante el asistente de Android Studio o tareas de Gradle, se firma el binario. Sin esta firma digital, Android bloquea la instalación por motivos de seguridad.
+3.  **Formato App Bundle (.aab):** Se optaría por generar un **Android App Bundle** en lugar de un APK simple. Este formato permite que Google Play optimice el tamaño del archivo según la arquitectura del dispositivo que lo descarga.
+
+
+
+---
+
+### ✅ Personalización e Instalación (RA7.b, RA7.f, RA7.g)
+
+La experiencia del usuario comienza con un instalador personalizado y una gestión de recursos eficiente en el dispositivo.
+
+* **Personalización (RA7.b):** Se han definido los iconos adaptativos (*Adaptive Icons*) y el nombre del paquete único para que la identidad visual sea coherente desde el momento de la descarga.
+* **Instalación Desatendida (RA7.f):** En un entorno corporativo municipal, se propone el despliegue mediante sistemas **MDM (Mobile Device Management)**. Esto permitiría instalar la app de forma masiva en terminales de operarios o tótems informativos sin intervención manual.
+* **Desinstalación Limpia (RA7.g):** El manifiesto de la app está configurado para que, al desinstalarse, el sistema elimine automáticamente los archivos de caché y datos temporales, liberando espacio en el dispositivo del ciudadano.
+
+---
+
+### ✅ Canales de Distribución y Herramientas (RA7.d, RA7.h)
+
+Se ha proyectado una estrategia de lanzamiento segmentada para minimizar riesgos y maximizar el alcance:
+
+1.  **Fase de Betas (Firebase App Distribution):** Uso de herramientas externas para enviar versiones de prueba a los técnicos municipales y recoger métricas de fallos antes del lanzamiento público.
+2.  **Canal Oficial (Google Play Console):** Publicación en la tienda oficial para garantizar actualizaciones automáticas y confianza del usuario.
+3.  **Sede Electrónica (APK Directo):** Publicación del instalador firmado en la web del Ayuntamiento de Cádiz como alternativa de descarga directa.
+
+
+
+---
+
+### 📊 Hoja de Ruta para el Despliegue Paso a Paso
+
+| Fase | Acción Técnica | Herramienta |
+| :--- | :--- | :--- |
+| **1. Ofuscación** | Aplicar R8/ProGuard para proteger el código. | Gradle |
+| **2. Generación** | Crear el paquete firmado de producción (.aab). | Android Studio KeyStore |
+| **3. Validación** | Desplegar en canal de pruebas internas. | Firebase / Play Store Console |
+| **4. Lanzamiento** | Publicación y monitorización de ANRs/Errores. | Google Play Console |
+
+> **Conclusión:** Aunque la distribución actual se realiza mediante depuración directa por cable (ADB), **CádizAccesible** cuenta con un plan de despliegue profesional documentado. Se han identificado todas las herramientas y procedimientos necesarios para transformar el código fuente en un producto comercializable, seguro y fácil de instalar para la ciudadanía.
+
+
+# 🧪 RA8 – Pruebas Avanzadas (Criterios FFOE)
+
+En el proyecto **CádizAccesible**, se han planteado y documentado pruebas de nivel avanzado de forma realista, alineadas con los estándares de un entorno profesional de desarrollo móvil. Estas validaciones aseguran que la aplicación no solo funciona, sino que es estable, segura y eficiente en el uso de recursos.
+
+---
+
+### ✅ Pruebas de Regresión (RA8.c)
+
+El objetivo de estas pruebas es garantizar que la introducción de nuevas funcionalidades o la corrección de errores no alteren negativamente los comportamientos ya existentes.
+
+* **Casos de Regresión Planificados:**
+    * **Persistencia:** Verificar que las incidencias antiguas siguen siendo legibles tras modificar el esquema de **Room** para añadir campos como "urgente" o "temporal".
+    * **Lógica Administrativa:** Validar que un cambio de estado realizado por el administrador no rompe la vista de "Mis Incidencias" del ciudadano.
+    * **Navegación:** Asegurar que la implementación del módulo de Informes no altera los flujos de navegación previos definidos en `HostNavegacion.kt`.
+* **Metodología:** Se han realizado ciclos de pruebas manuales tras cada hito de desarrollo, documentando que las funciones core (crear, listar y ver detalle) permanecen intactas.
+
+
+
+---
+
+### ✅ Pruebas de Volumen y Estrés (RA8.d)
+
+Se ha evaluado el comportamiento de la aplicación ante el incremento masivo de datos para prever degradaciones en el rendimiento.
+
+* **Escenarios Probados:**
+    * **Listados Extensos:** Inserción masiva de registros para verificar que `LazyColumn` gestiona el reciclaje de vistas de forma fluida sin tirones (*jank*).
+    * **Gráficos Dinámicos:** Comprobación de que el componente `GraficoBarras.kt` escala correctamente la altura de las barras y las etiquetas cuando los valores numéricos son muy elevados.
+* **Resultado:** La arquitectura reactiva basada en **Flow** y las consultas agregadas de **Room** mantienen tiempos de respuesta óptimos incluso con conjuntos de datos significativos.
+
+---
+
+### ✅ Pruebas de Seguridad y Uso de Recursos (RA8.e / RA8.f)
+
+A pesar de ser una aplicación local, se han aplicado principios de seguridad funcional y optimización de hardware.
+
+* **Seguridad Funcional (RA8.e):**
+    * **Control de Acceso:** Validación de que la pantalla de Informes y la Bandeja de Administración son inaccesibles para el rol de ciudadano mediante lógica de protección en el `NavHost`.
+    * **Permisos Críticos:** Gestión responsable de los permisos de Cámara y Ubicación, solicitándolos únicamente cuando la acción es requerida por el usuario.
+* **Análisis de Recursos (RA8.f):**
+    * **Gestión de Memoria:** Uso de `AsyncImage` (Coil) para la carga diferida de imágenes, evitando desbordamientos de memoria (*Out Of Memory errors*).
+    * **Eficiencia de CPU:** Las consultas a la base de datos se realizan en hilos secundarios mediante `Dispatchers.IO`, manteniendo el hilo principal libre para una interfaz fluida a 60fps.
+
+
+
+---
+
+### 📊 Matriz de Validación Avanzada
+
+| Criterio | Tipo de Prueba | Evidencia Técnica | Resultado |
+| :--- | :--- | :--- | :--- |
+| **RA8.c** | Regresión | Pruebas de integridad tras cambios en BD | **Estable** |
+| **RA8.d** | Volumen | Listados largos con `LazyColumn` | **Fluido** |
+| **RA8.e** | Seguridad | Lógica de roles en `HostNavegacion.kt` | **Seguro** |
+| **RA8.f** | Recursos | Carga de imágenes con Coil | **Optimizado** |
+
+> **Conclusión FFOE:** El cumplimiento de estos criterios avanzados demuestra que **CádizAccesible** ha sido desarrollada con una mentalidad de ingeniería de software, priorizando la estabilidad a largo plazo y la eficiencia operativa en el dispositivo del usuario.
