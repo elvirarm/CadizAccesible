@@ -237,3 +237,182 @@ Control de "limpieza" del historial:
 #### 4. Estabilidad y Estados de la Interfaz
 * **Feedback Continuo:** Gestión de estados cargando, vacío o error.
 * **Coherencia Visual:** Componentes reutilizables garantizan la misma estética en toda la app.
+
+## RA2 – Utilización de librerías y herramientas NUI
+
+Este apartado analiza cómo **CádizAccesible** rompe con el esquema de las interfaces gráficas tradicionales (GUI) para adoptar una **Interfaz Natural de Usuario (NUI)**. El objetivo principal es que la tecnología se adapte al usuario —especialmente a aquellos con necesidades de accesibilidad— y no al revés.
+
+---
+
+### ✅ Análisis e Integración de Herramientas NUI (RA2.a)
+
+He implementado un conjunto de herramientas que permiten una interacción más humana y contextual, reduciendo la carga cognitiva y las barreras físicas.
+
+#### 1. Reconocimiento de Voz (Speech-to-Text)
+La voz es la interfaz natural por excelencia. He integrado esta capacidad para permitir el reporte de incidencias en situaciones donde el uso del teclado es dificultoso o imposible.
+
+* **Implementación técnica:** Utilizo la API `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` de Android.
+* **Integración en la UI:** Mediante el componente personalizado `CampoTextoConVoz.kt`, el usuario puede dictar el título, la descripción o la ubicación.
+* **Justificación:** Esta herramienta es vital para usuarios con movilidad reducida en las manos o para ciudadanos que se desplazan por la vía pública y necesitan una forma rápida y "manos libres" de introducir datos.
+
+#### 2. Interacción mediante Gestos (Gestural UI)
+He sustituido la navegación basada en botones pequeños y menús profundos por gestos táctiles intuitivos que aprovechan el comportamiento natural del usuario con dispositivos móviles.
+
+* **Uso de Swipe:** Implementado en la bandeja de administración y en el listado de incidencias mediante el componente `SwipeToDismiss`.
+* **Justificación:** El gesto de deslizar es una respuesta natural y fluida. Al permitir que el administrador gestione estados (aceptar/rechazar) con un simple movimiento lateral, se mejora la velocidad de respuesta y se simplifica la experiencia de uso al eliminar clics innecesarios.
+
+#### 3. Ubicación y Geofencing Contextual
+La aplicación utiliza el contexto físico del ciudadano como un canal de entrada de información automática, convirtiendo al GPS en parte de la interfaz.
+
+* **Herramienta:** `FusedLocationProviderClient` de Google Play Services.
+* **Flujo Natural:** El sistema detecta la posición del usuario y, mediante procesos de geocodificación inversa (`Geocoder`), propone la dirección exacta automáticamente.
+* **Justificación:** Es una interfaz natural porque el sistema "entiende" el entorno. Evita que el usuario tenga que conocer el nombre de la calle exacta donde se encuentra, delegando esa tarea técnica a los sensores del dispositivo.
+
+#### 4. Sensores de Imagen (Entrada Visual)
+La cámara no es solo un accesorio, sino un sensor de entrada de datos que permite "mostrar" la realidad sin necesidad de describirla con lenguaje abstracto.
+
+* **Integración:** Captura directa mediante `ActivityResultContracts` para cámara y galería.
+* **Justificación:** Para una incidencia de accesibilidad, una imagen es el input más natural posible. Permite una comunicación no verbal inmediata y precisa entre el ciudadano y la administración.
+
+
+
+---
+
+### 🚀 Análisis de Evolución Tecnológica (RA2.e y RA2.f)
+
+Como parte del análisis crítico de este RA, he evaluado la incorporación de tecnologías emergentes que elevarían la accesibilidad de la plataforma a un nivel superior en futuras versiones.
+
+#### 1. Adaptabilidad Ergonómica mediante Visión Artificial (RA2.e)
+Aunque no se ha incluido en el MVP (Producto Mínimo Viable) actual por razones de optimización de recursos y privacidad, he proyectado la integración de **ML Kit (Pose Detection)**.
+
+* **Propuesta:** La aplicación podría analizar, mediante el procesamiento en local de la cámara frontal, la postura del usuario o la forma en que sujeta el dispositivo.
+* **Impacto en la Accesibilidad:** Si el sistema detecta una limitación en la precisión del toque o una vibración excesiva, la interfaz podría reaccionar dinámicamente aumentando el tamaño de los objetivos táctiles (botones) o activando automáticamente el dictado por voz, personalizando la ergonomía de la app en tiempo real y sin intervención del usuario.
+
+#### 2. Realidad Aumentada para la Navegación Urbana (RA2.f)
+La arquitectura de datos actual, basada en coordenadas geográficas almacenadas en **Room**, está preparada técnicamente para dar el salto a la Realidad Aumentada (AR).
+
+* **Viabilidad Técnica:** Utilizando **ARCore**, los datos de latitud y longitud ya existentes podrían proyectarse sobre el *viewport* de la cámara del dispositivo.
+* **Caso de Uso:** Un usuario con discapacidad podría enfocar la calle y ver indicadores en 3D sobre el mundo real, señalando rampas accesibles o avisando de obstáculos reportados por otros ciudadanos.
+* **Conclusión:** Esta capa de información digital sobre el mundo físico representa el estado del arte en interfaces naturales, eliminando la necesidad de interpretar mapas 2D y haciendo la información mucho más accesible.
+
+# RA3 – Uso de librerías y componentes avanzados
+
+En este apartado se detalla la construcción del sistema de componentes de **CádizAccesible**, analizando las herramientas utilizadas y justificando la modularidad del código para cumplir con los estándares de reutilización, flexibilidad e integración total en el flujo de la aplicación.
+
+---
+
+### ✅ Herramientas para la Creación de Componentes (RA3.a)
+
+Para construir este "mini sistema de diseño", he utilizado las APIs más avanzadas de Android que garantizan consistencia visual y técnica:
+
+* **Jetpack Compose (Motor Declarativo):** Base del proyecto que permite fragmentar la UI en funciones `@Composable` independientes, facilitando el mantenimiento global y permitiendo que componentes como `AppChips.kt` sean totalmente agnósticos a la pantalla donde se usan.
+* **Material 3 y Slot APIs:** He adoptado Material 3 como librería base (`ElevatedCard`, `FilterChip`, `OutlinedTextField`). El uso de **Slot APIs** (como el parámetro `content` en `AppCard.kt`) permite que el contenedor gestione el diseño y la elevación, mientras que el contenido interno es totalmente flexible.
+    ```kotlin
+    // Ejemplo de Slot API en AppCard.kt
+    @Composable
+    fun AppCard(
+        title: String? = null,
+        modifier: Modifier = Modifier,
+        content: @Composable ColumnScope.() -> Unit // Slot para contenido flexible
+    ) { ... }
+    ```
+* **Canvas API:** Utilizada en `GraficoBarras.kt` para dibujo de bajo nivel sin depender de librerías externas pesadas. Esto demuestra el uso de APIs avanzadas de dibujo para crear visualizaciones de alto rendimiento.
+    ```kotlin
+    // Fragmento de dibujo manual con Canvas para el gráfico
+    Canvas(modifier = modifier.fillMaxWidth().height(alturaDp.dp)) {
+        drawRoundRect(
+            color = colorBarra,
+            size = Size(width = anchoBarra, height = altoBarraPx)
+        )
+    }
+    ```
+* **Coil:** Integración de la librería mediante `AsyncImage` para una gestión eficiente de la memoria y carga asíncrona de imágenes en las tarjetas de incidencias.
+* **FlowRow:** Herramienta clave para el diseño adaptativo de grupos de chips, evitando que el contenido se corte al saltar de línea automáticamente según el ancho del dispositivo.
+
+---
+
+### ✅ Diseño y Reutilización de Componentes (RA3.b / RA3.c)
+
+La interfaz se basa en el principio de **desacoplamiento**: los componentes son "cajas negras" que no conocen el contexto de la base de datos, simplemente reciben datos y emiten eventos, utilizando **parámetros con valores por defecto (defaults)** para maximizar su flexibilidad.
+
+#### 1. Componentes de Dominio: TarjetaIncidencia
+* **Modularidad:** Se utiliza tanto en la vista del ciudadano (`PantallaMisIncidencias`) como en la del administrador (`PantallaBandejaAdmin`). No navega por sí misma; recibe un objeto `Incidencia` y un callback `onClick`.
+* **Flexibilidad (RA3.c):** Incluye el parámetro `mostrarMiniatura: Boolean = true`, permitiendo reutilizar la tarjeta en listados densos o modos compactos simplemente cambiando un parámetro.
+    ```kotlin
+    @Composable
+    fun TarjetaIncidencia(
+        incidencia: Incidencia,
+        onClick: (String) -> Unit,
+        modifier: Modifier = Modifier,
+        mostrarMiniatura: Boolean = true // Parámetro con default
+    )
+    ```
+
+#### 2. Componentes Semánticos: StatusChip y TagChip
+* **Abstracción:** Centralizan la lógica visual de los estados (`Success`, `Warning`, `Danger`). Si cambia el color representativo de una incidencia "Urgente", solo se modifica en este componente y el cambio se propaga por toda la aplicación automáticamente.
+
+#### 3. Componentes de Entrada Híbrida: CampoTextoConVoz
+* **Configurabilidad Máxima:** Unifica entradas cortas y largas bajo una misma lógica. Parámetros como `singleLine = false` y `anexarDictado = true` permiten que el componente funcione para un título o una descripción extensa.
+* **Reutilización:** Se emplea en la creación de incidencias y en la gestión de comentarios del administrador, garantizando que el dictado por voz funcione siempre de la misma manera.
+
+#### 4. Robustez Visual: GraficoBarras
+* **Prevención de errores:** Incluye "safe values" para asegurar que el componente no falle si la base de datos devuelve una lista vacía, demostrando un diseño preparado para producción.
+    ```kotlin
+    // Lógica de protección contra listas vacías
+    val safeValores = if (valores.isEmpty()) listOf(0) else valores
+    ```
+
+---
+
+### ✅ Gestión de Eventos e Interactividad (RA3.d)
+
+Los componentes de **CádizAccesible** no son estáticos; notifican acciones hacia las capas superiores (ViewModels) mediante callbacks, aplicando el patrón de **State Hoisting**:
+
+* **Desacoplamiento de navegación:** `TarjetaIncidencia` emite un `onClick(id)`. La tarjeta no sabe a qué pantalla ir; el NavHost decide la acción.
+* **Hibridación de eventos en entrada de datos:** `CampoTextoConVoz` coordina la escritura manual y el dictado por voz, entregando a la lógica de negocio un valor final ya procesado.
+    ```kotlin
+    // Integración del evento de voz dentro del componente de texto
+    VoiceInputButton(onTextRecognized = { texto ->
+        val nuevoTexto = if (anexarDictado) "$value $texto".trim() else texto
+        onValueChange(nuevoTexto) // Notifica el cambio al nivel superior
+    })
+    ```
+* **Evolución propuesta:** Los chips de estado están diseñados para aceptar un `onClick` opcional en futuras versiones, permitiendo filtrar las listas directamente desde la etiqueta de la incidencia.
+
+---
+
+### ✅ Catálogo de componentes UI (RA3.f)
+
+Este manual técnico detalla la responsabilidad y ubicación de las piezas principales del proyecto:
+
+| Nombre | Ubicación | Responsabilidad | Pantallas Principales |
+| :--- | :--- | :--- | :--- |
+| **AppCard** | `ui/components/AppCard.kt` | Contenedor base con estilo coherente y slots. | Todas las secciones. |
+| **TarjetaIncidencia** | `ui/components/TarjetaIncidencia.kt` | Transforma el modelo en tarjeta visual interactiva. | Mis Incidencias, Bandeja Admin. |
+| **AppChips** | `ui/components/AppChips.kt` | Etiquetas semánticas con colores por estado/gravedad. | Tarjetas, Detalle, Informes. |
+| **CampoTextoConVoz** | `ui/components/CampoTextoConVoz.kt` | Input híbrido (teclado + dictado por voz). | Crear Incidencia, Detalle. |
+| **GraficoBarras** | `ui/components/GraficoBarras.kt` | Visualización estadística personalizada con Canvas. | Pantalla Informes. |
+| **VoiceInputButton** | `ui/components/VoiceInputButton.kt` | Botón NUI que gestiona el `RecognizerIntent`. | Interno en CampoTextoConVoz. |
+
+
+
+---
+
+### ✅ Integración en el Flujo de la App (RA3.h)
+
+La estabilidad de **CádizAccesible** se debe a la integración total de estos componentes en el flujo real de datos y navegación:
+
+1.  **Reutilización Transversal:** El `CampoTextoConVoz` se usa tanto para el ciudadano como para el administrador, garantizando una experiencia de accesibilidad uniforme en toda la plataforma.
+2.  **Jerarquía de Composición:** El `VoiceInputButton` está integrado dentro del `CampoTextoConVoz`, demostrando una arquitectura de componentes por niveles (Botón -> Campo -> Pantalla).
+3.  **Conexión con Room y Flow:** Los componentes reaccionan a flujos de datos reales. Al actualizar una incidencia mediante el gesto *swipe* en la lista, los chips de estado se recomponen automáticamente para reflejar el cambio en la base de datos sin recargar la pantalla.
+4.  **Sincronización de Informes:** El `GraficoBarras` consume directamente los datos procesados del `InformesViewModel`, utilizándose por duplicado para mostrar datos por estado y por gravedad dentro del mismo dashboard.
+
+### **Matriz de Integración Final**
+
+| Componente | Integración Clave | Acción Resultante |
+| :--- | :--- | :--- |
+| **TarjetaIncidencia** | `LazyColumn` en listados | Navegación al detalle vía ID. |
+| **CampoTextoConVoz** | Formularios de entrada | Validación y persistencia en Room. |
+| **StatusChip** | Indicadores de estado | Feedback visual de gestión rápida. |
+| **GraficoBarras** | Dashboard Administrativo | Análisis visual de KPIs reales. |
+
