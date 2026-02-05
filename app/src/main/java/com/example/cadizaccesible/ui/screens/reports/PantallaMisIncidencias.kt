@@ -23,6 +23,17 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 
+/**
+ * Pantalla que lista las incidencias reportadas específicamente por el usuario actual.
+ * * Esta vista permite al ciudadano realizar un seguimiento de sus propios reportes y
+ * gestionar su limpieza mediante gestos de deslizamiento.
+ * * Funcionalidades clave:
+ * 1. **Filtrado por Propietario**: Solo muestra datos vinculados al [emailUsuario].
+ * 2. **Eliminación Intuitiva**: Implementa el patrón "Swipe-to-Dismiss" para borrar reportes.
+ * 3. **Navegación al Detalle**: Permite profundizar en cada incidencia pulsando sobre su tarjeta.
+ * * @param emailUsuario Identificador del usuario para filtrar la consulta en la base de datos.
+ * @param alAbrirDetalle Callback que recibe el ID de la incidencia para navegar a su vista detallada.
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun PantallaMisIncidencias(
@@ -30,9 +41,13 @@ fun PantallaMisIncidencias(
     alAbrirDetalle: (String) -> Unit
 ) {
     val contexto = LocalContext.current
+    // Instanciación del repositorio para acceso a datos locales
     val repo = remember { RepositorioIncidenciasRoom(contexto) }
     val scope = rememberCoroutineScope()
 
+    /** * Recolección de la lista de incidencias como un estado de Compose.
+     * Se actualiza automáticamente cada vez que la base de datos sufre un cambio.
+     */
     val lista by repo
         .obtenerPorCreador(emailUsuario)
         .collectAsState(initial = emptyList())
@@ -53,6 +68,7 @@ fun PantallaMisIncidencias(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            /** Tarjeta de cabecera con instrucciones de uso */
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
@@ -75,6 +91,9 @@ fun PantallaMisIncidencias(
                 }
             }
 
+            /** * Estado de vista vacía: Se muestra cuando el usuario no tiene
+             * registros en la base de datos.
+             */
             if (lista.isEmpty()) {
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -101,6 +120,9 @@ fun PantallaMisIncidencias(
                     }
                 }
             } else {
+                /** * Listado optimizado mediante LazyColumn.
+                 * Solo renderiza los elementos visibles en pantalla.
+                 */
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(vertical = 6.dp),
@@ -108,21 +130,24 @@ fun PantallaMisIncidencias(
                 ) {
                     items(
                         items = lista,
-                        key = { it.id }
+                        key = { it.id } // Clave única para optimizar recomposiciones y animaciones
                     ) { incidencia ->
 
+                        /** * Gestión del estado del gesto de deslizamiento.
+                         * Se activa el borrado físico en el repositorio al completar el gesto.
+                         */
                         val estadoSwipe = rememberDismissState(
                             confirmStateChange = { valor ->
                                 if (valor == DismissValue.DismissedToStart) {
                                     scope.launch { repo.eliminarIncidencia(incidencia.id) }
-                                    true
+                                    true // Confirmar la eliminación visual
                                 } else false
                             }
                         )
 
                         SwipeToDismiss(
                             state = estadoSwipe,
-                            directions = setOf(DismissDirection.EndToStart),
+                            directions = setOf(DismissDirection.EndToStart), // Solo permitir deslizar hacia la izquierda
                             background = {
                                 FondoSwipeEliminar(direccion = estadoSwipe.dismissDirection)
                             },
@@ -140,6 +165,10 @@ fun PantallaMisIncidencias(
     }
 }
 
+/**
+ * Representa la capa visual que aparece "detrás" de la tarjeta cuando se desliza.
+ * Indica visualmente la acción de borrado mediante colores y un icono descriptivo.
+ */
 @Composable
 private fun FondoSwipeEliminar(direccion: DismissDirection?) {
     val mostrando = direccion == DismissDirection.EndToStart

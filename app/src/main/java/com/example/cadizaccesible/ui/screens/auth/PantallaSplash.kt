@@ -1,8 +1,6 @@
 package com.example.cadizaccesible.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +11,16 @@ import com.example.cadizaccesible.data.sesion.GestorSesion
 import com.example.cadizaccesible.data.users.RolUsuario
 import kotlinx.coroutines.flow.first
 
+/**
+ * Pantalla de transición inicial (Splash Screen) encargada de la lógica de enrutamiento.
+ * * Su propósito es doble:
+ * 1. Proporcionar una bienvenida visual mientras se inicializan los recursos.
+ * 2. Comprobar de forma asíncrona si existe una sesión activa y redirigir al flujo adecuado
+ * (Login, Dashboard de Ciudadano o Dashboard de Administrador).
+ * * @param irALogin Callback para navegar a la pantalla de autenticación.
+ * @param irAInicioCiudadano Callback para navegar al inicio de usuarios estándar.
+ * @param irAInicioAdmin Callback para navegar al inicio de usuarios con privilegios.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaSplash(
@@ -21,13 +29,21 @@ fun PantallaSplash(
     irAInicioAdmin: () -> Unit
 ) {
     val contexto = LocalContext.current
+    // Se instancia el gestor para consultar la persistencia en DataStore
     val gestorSesion = remember { GestorSesion(contexto) }
 
+    /**
+     * LaunchedEffect ejecuta la lógica de comprobación una sola vez al entrar en la composición.
+     * Utiliza el flujo de sesión obteniendo solo el primer valor emitido ('first()').
+     */
     LaunchedEffect(Unit) {
         val sesion = gestorSesion.flujoSesion.first()
-        if (!sesion.estaLogueado) irALogin()
-        else if (sesion.rol == RolUsuario.ADMIN) irAInicioAdmin()
-        else irAInicioCiudadano()
+
+        when {
+            !sesion.estaLogueado -> irALogin()
+            sesion.rol == RolUsuario.ADMIN -> irAInicioAdmin()
+            else -> irAInicioCiudadano()
+        }
     }
 
     Scaffold(
@@ -64,6 +80,7 @@ fun PantallaSplash(
 
                     Spacer(Modifier.height(6.dp))
 
+                    // Indicador de progreso que confirma al usuario que la app está trabajando
                     CircularProgressIndicator(
                         modifier = Modifier.size(28.dp),
                         strokeWidth = 3.dp,

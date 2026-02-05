@@ -17,7 +17,17 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 
 
-
+/**
+ * Panel de control principal para el rol de Administrador.
+ * * Esta pantalla centraliza las funcionalidades de gestión técnica:
+ * 1. Acceso a la bandeja global de incidencias para revisión y cambio de estados.
+ * 2. Visualización de informes estadísticos sobre la accesibilidad urbana.
+ * 3. Configuración de preferencias locales (Modo Oscuro).
+ * 4. Gestión del ciclo de vida de la sesión administrativa.
+ * * @param irABandeja Navega al listado completo de incidencias de la ciudad.
+ * @param irAInformes Navega a la sección de analítica y gráficos.
+ * @param alCerrarSesion Callback para redirigir al flujo de login tras limpiar credenciales.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaInicioAdmin(
@@ -25,6 +35,7 @@ fun PantallaInicioAdmin(
     irAInformes: () -> Unit,
     alCerrarSesion: () -> Unit
 ) {
+    // ... (Inicialización de gestores y estados)
     val contexto = LocalContext.current
     val gestorSesion = remember { GestorSesion(contexto) }
     val scope = rememberCoroutineScope()

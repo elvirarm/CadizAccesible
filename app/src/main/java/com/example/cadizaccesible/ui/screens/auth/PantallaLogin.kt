@@ -20,7 +20,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import com.example.cadizaccesible.R
 
-
+/**
+ * Pantalla de inicio de sesión de la aplicación.
+ * * Proporciona la interfaz para que los usuarios (Ciudadanos y Administradores)
+ * accedan a sus respectivos paneles. Incluye validación visual de errores y
+ * estados de carga durante la comunicación con el repositorio de usuarios.
+ * * @param irARegistro Callback para navegar hacia el formulario de creación de cuenta.
+ * @param alLoguear Callback que recibe el [RolUsuario] tras una autenticación exitosa para redirigir al usuario.
+ * @param vm ViewModel encargado de gestionar el estado de autenticación y la lógica de sesión.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaLogin(
@@ -28,11 +36,16 @@ fun PantallaLogin(
     alLoguear: (RolUsuario) -> Unit,
     vm: AuthViewModel = viewModel()
 ) {
+    // Resetea cualquier estado de error residual al cargar la pantalla
     LaunchedEffect(Unit) { vm.limpiarError() }
 
     val estadoUi by vm.estadoUi.collectAsState()
+
+    // Estados locales para la captura de credenciales
     var email by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
+
+    // ... (Estructura de Scaffold y Screen)
 
     Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { padding ->
 

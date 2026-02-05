@@ -8,6 +8,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.cadizaccesible.ui.theme.Dimens
 
+/**
+ * Tarjeta de gran impacto visual (Hero) utilizada para secciones destacadas.
+ * * A diferencia de [AppCard], este componente utiliza el color de contenedor primario
+ * del sistema para atraer la atención del usuario y permite la inclusión de un elemento
+ * gráfico o icono principal (hero content).
+ * * @param title Título principal en estilo [titleLarge].
+ * @param subtitle Subtítulo descriptivo con opacidad reducida para jerarquía visual.
+ * @param modifier [Modifier] para ajustar el tamaño o comportamiento de la tarjeta.
+ * @param hero Slot opcional para incluir un Composable (como un icono grande o imagen)
+ * que aparecerá en la parte superior del texto.
+ */
 @Composable
 fun HeroCard(
     title: String,
@@ -26,6 +37,7 @@ fun HeroCard(
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Renderiza el contenido destacado (ej. un Icono con Modifier.size(64.dp))
             if (hero != null) {
                 hero()
             }

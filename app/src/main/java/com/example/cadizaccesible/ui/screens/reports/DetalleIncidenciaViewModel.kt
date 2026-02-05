@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Estado de la interfaz para la visualización y edición de detalles de una incidencia.
+ * @property cargando Indica si la incidencia se está recuperando de la base de datos por primera vez.
+ * @property actualizando Estado activo durante la persistencia de cambios (ej. cambio de estado por un admin).
+ * @property comentarioAdmin Buffer temporal para el texto de respuesta del administrador.
+ */
 data class DetalleIncidenciaUiState(
     val cargando: Boolean = true,
     val incidencia: Incidencia? = null,
@@ -19,6 +25,11 @@ data class DetalleIncidenciaUiState(
     val actualizando: Boolean = false
 )
 
+/**
+ * ViewModel que gestiona la lógica de una incidencia específica identificada por su ID.
+ * * Utiliza una [Factory] para permitir la inyección del [idIncidencia] en tiempo de creación,
+ * lo que facilita la carga automática de datos en el bloque [init].
+ */
 class DetalleIncidenciaViewModel(
     private val repo: RepositorioIncidenciasRoom,
     private val idIncidencia: String
@@ -31,6 +42,7 @@ class DetalleIncidenciaViewModel(
         cargar()
     }
 
+    /** Recupera la incidencia desde el repositorio y actualiza el estado de la UI. */
     fun cargar() {
         viewModelScope.launch {
             _ui.update { it.copy(cargando = true, error = "") }
@@ -50,10 +62,16 @@ class DetalleIncidenciaViewModel(
         }
     }
 
+    /** Actualiza el estado local del comentario antes de ser persistido. */
     fun onComentarioAdmin(v: String) {
         _ui.update { it.copy(comentarioAdmin = v) }
     }
 
+    /**
+     * Persiste un cambio de estado y el comentario asociado en la base de datos.
+     * * Tras la actualización, vuelve a consultar la base de datos para asegurar que
+     * la UI refleja los datos exactos que han sido guardados.
+     */
     fun cambiarEstado(estado: EstadoIncidencia, onOk: (() -> Unit)? = null) {
         val inc = _ui.value.incidencia ?: return
         viewModelScope.launch {
@@ -80,6 +98,7 @@ class DetalleIncidenciaViewModel(
         }
     }
 
+    /** Factoría necesaria para pasar argumentos dinámicos al constructor del ViewModel. */
     class Factory(
         private val repo: RepositorioIncidenciasRoom,
         private val id: String

@@ -15,22 +15,33 @@ import com.example.cadizaccesible.ui.theme.Dimens
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 
+/**
+ * Pantalla de registro de nuevos usuarios.
+ * * Permite a los ciudadanos crear una cuenta para reportar incidencias.
+ * Incluye una lógica condicional para el registro de administradores mediante
+ * un código de validación secreto.
+ * * @param volverALogin Callback para regresar a la pantalla de inicio de sesión.
+ * @param vm ViewModel de autenticación que gestiona la lógica de negocio y persistencia.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaRegistro(
     volverALogin: () -> Unit,
     vm: AuthViewModel = viewModel()
 ) {
+    // Al entrar, aseguramos que no se arrastren errores de intentos previos
     LaunchedEffect(Unit) { vm.limpiarError() }
 
     val estadoUi by vm.estadoUi.collectAsState()
 
+    // Estados locales para el formulario
     var nombre by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var codigoAdmin by remember { mutableStateOf("") }
     var rol by remember { mutableStateOf(RolUsuario.CIUDADANO) }
 
+    // ... (Configuración de UI y Scaffold)
     val chipColors = FilterChipDefaults.filterChipColors(
         selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
         selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer

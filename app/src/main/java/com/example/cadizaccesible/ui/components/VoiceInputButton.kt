@@ -13,6 +13,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import java.util.Locale
 
+/**
+ * Botón interactivo que activa el motor de reconocimiento de voz del sistema Android.
+ * * Este componente gestiona la comunicación con el servicio de Speech-to-Text de Google.
+ * Al ser pulsado, lanza una actividad del sistema que escucha al usuario y devuelve
+ * el texto transcrito al callback [onTextRecognized].
+ * * @param onTextRecognized Función que recibe el String transcrito tras el dictado exitoso.
+ * @param locale Configuración regional para el reconocimiento de voz (por defecto, español de España).
+ */
 @Composable
 fun VoiceInputButton(
     onTextRecognized: (String) -> Unit,
@@ -20,6 +28,10 @@ fun VoiceInputButton(
 ) {
     val context = LocalContext.current
 
+    /**
+     * Lanzador de actividad para gestionar el resultado del dictado.
+     * Recupera la lista de posibles resultados y selecciona el de mayor precisión (el primero).
+     */
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -37,6 +49,7 @@ fun VoiceInputButton(
 
     IconButton(
         onClick = {
+            // Configuración del Intent para el reconocimiento de voz
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(
                     RecognizerIntent.EXTRA_LANGUAGE_MODEL,
@@ -45,6 +58,7 @@ fun VoiceInputButton(
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, locale.toLanguageTag())
                 putExtra(RecognizerIntent.EXTRA_PROMPT, "Habla ahora…")
             }
+            // Lanza el asistente de voz del sistema
             launcher.launch(intent)
         }
     ) {

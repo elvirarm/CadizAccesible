@@ -14,6 +14,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cadizaccesible.data.reports.*
 import com.example.cadizaccesible.ui.components.GraficoBarras
 
+/**
+ * Pantalla de visualización de datos y analítica de la aplicación.
+ * * Esta vista procesa la información de las incidencias para ofrecer al administrador
+ * una visión cuantitativa mediante indicadores clave de rendimiento (KPIs),
+ * filtros dinámicos y gráficos de distribución.
+ * * @param alVolver Callback para navegar de regreso al menú de administración.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaInformes(
@@ -22,10 +29,12 @@ fun PantallaInformes(
     val context = LocalContext.current
     val repo = remember { RepositorioIncidenciasRoom(context) }
 
+    // Inicialización del ViewModel mediante su Factory para inyectar el repositorio
     val vm: InformesViewModel = viewModel(
         factory = InformesViewModel.Factory(repo)
     )
 
+    // Recolección de estados reactivos desde el ViewModel
     val total by vm.totalIncidencias.collectAsState()
     val urgentes by vm.totalUrgentes.collectAsState()
     val distEstados by vm.distEstados.collectAsState()
@@ -33,8 +42,10 @@ fun PantallaInformes(
     val resumenFiltrado by vm.resumenFiltrado.collectAsState()
     val ui by vm.ui.collectAsState()
 
+    // Lógica de cálculo de métricas en tiempo real
     val porcentajeUrgentes = if (total == 0) 0 else (urgentes * 100 / total)
 
+    // Definición de la paleta de colores para las tarjetas de información
     val kpiTotalBg = MaterialTheme.colorScheme.secondaryContainer
     val kpiUrgBg = MaterialTheme.colorScheme.tertiaryContainer
     val filtrosBg = MaterialTheme.colorScheme.surfaceVariant
@@ -60,6 +71,7 @@ fun PantallaInformes(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
 
+            /** Tarjeta de Bienvenida y Propósito */
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
@@ -79,6 +91,7 @@ fun PantallaInformes(
                 }
             }
 
+            /** Sección de KPIs (Key Performance Indicators) */
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -99,6 +112,7 @@ fun PantallaInformes(
                 )
             }
 
+            /** Panel de Filtros Interactivos */
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
@@ -125,6 +139,7 @@ fun PantallaInformes(
 
                     Spacer(Modifier.height(2.dp))
 
+                    /** Métrica de Resultado de Filtrado */
                     ResumenCardPro(
                         titulo = "Resultado del filtro",
                         valor = resumenFiltrado.toString(),
@@ -135,6 +150,7 @@ fun PantallaInformes(
                 }
             }
 
+            /** Visualización Gráfica: Distribución por Estado */
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
@@ -161,6 +177,7 @@ fun PantallaInformes(
                 }
             }
 
+            /** Visualización Gráfica: Distribución por Gravedad */
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.elevatedCardColors(
@@ -187,6 +204,7 @@ fun PantallaInformes(
                 }
             }
 
+            /** Botón de Retorno */
             OutlinedButton(
                 onClick = alVolver,
                 modifier = Modifier.fillMaxWidth()
@@ -195,6 +213,7 @@ fun PantallaInformes(
     }
 }
 
+/** Componente de tarjeta especializada para métricas cuantitativas. */
 @Composable
 private fun ResumenCardPro(
     titulo: String,
@@ -227,6 +246,7 @@ private fun ResumenCardPro(
     }
 }
 
+/** Selector de filtros basado en los estados de una incidencia. */
 @Composable
 private fun FiltroEstadoPro(
     seleccionado: EstadoIncidencia?,
@@ -260,6 +280,7 @@ private fun FiltroEstadoPro(
     }
 }
 
+/** Selector de filtros basado en la gravedad de una incidencia. */
 @Composable
 private fun FiltroGravedadPro(
     seleccionado: Gravedad?,
@@ -293,10 +314,7 @@ private fun FiltroGravedadPro(
     }
 }
 
-/**
- * ✅ Chip “pro” compatible:
- * En tu versión, el tipo correcto es ChipColors.
- */
+/** Componente genérico para chips de filtrado con comportamiento de selección. */
 @Composable
 private fun ChipFiltro(
     text: String,
@@ -313,6 +331,7 @@ private fun ChipFiltro(
     )
 }
 
+/** Mapeo de valores de enumerado a cadenas legibles para la UI general. */
 private fun EstadoIncidencia.textoUI(): String =
     when (this) {
         EstadoIncidencia.PENDIENTE -> "Pendiente"
@@ -322,6 +341,7 @@ private fun EstadoIncidencia.textoUI(): String =
         EstadoIncidencia.RECHAZADA -> "Rechazada"
     }
 
+/** Mapeo específico para etiquetas compactas en componentes tipo Chip. */
 private fun EstadoIncidencia.textoChip(): String =
     when (this) {
         EstadoIncidencia.EN_REVISION -> "En rev."

@@ -21,6 +21,15 @@ import com.example.cadizaccesible.data.reports.RepositorioIncidenciasRoom
 import com.example.cadizaccesible.ui.components.CampoTextoConVoz
 import com.example.cadizaccesible.data.reports.Gravedad
 
+/**
+ * Pantalla integral de visualización y gestión de incidencias.
+ * * Este componente es dual:
+ * 1. Para el Ciudadano: Muestra el progreso de su reporte y los comentarios del técnico.
+ * 2. Para el Administrador: Ofrece una consola de gestión para cambiar estados y responder.
+ * * @param idIncidencia Identificador único de la incidencia a cargar.
+ * @param esAdmin Determina si se muestran los controles de edición gubernamental.
+ * @param alVolver Callback para navegar hacia atrás en el stack.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaDetalleIncidencia(
@@ -28,6 +37,7 @@ fun PantallaDetalleIncidencia(
     esAdmin: Boolean,
     alVolver: () -> Unit
 ) {
+    // Inicialización de dependencias y ViewModel mediante Factory
     val contexto = LocalContext.current
     val repo = remember { RepositorioIncidenciasRoom(contexto) }
 
@@ -50,6 +60,7 @@ fun PantallaDetalleIncidencia(
         }
     ) { padding ->
 
+        // --- ESTADO: CARGANDO ---
         if (state.cargando) {
             Column(
                 modifier = Modifier
@@ -81,6 +92,7 @@ fun PantallaDetalleIncidencia(
             return@Scaffold
         }
 
+        // --- ESTADO: ERROR O NO ENCONTRADO ---
         val incidencia = state.incidencia
         if (incidencia == null) {
             Column(
@@ -123,6 +135,7 @@ fun PantallaDetalleIncidencia(
             return@Scaffold
         }
 
+        // --- LÓGICA DE COLORES DINÁMICOS SEGÚN ESTADO ---
         val headerColor = when (incidencia.estado) {
             EstadoIncidencia.PENDIENTE -> MaterialTheme.colorScheme.tertiaryContainer
             EstadoIncidencia.EN_REVISION -> MaterialTheme.colorScheme.secondaryContainer
@@ -143,6 +156,7 @@ fun PantallaDetalleIncidencia(
             .fillMaxWidth()
             .heightIn(min = 140.dp)
 
+        // --- CONTENIDO PRINCIPAL (SCROLLABLE) ---
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -167,6 +181,7 @@ fun PantallaDetalleIncidencia(
                 }
             }
 
+            /** Cabecera: Título, descripción y metadatos visuales */
             ElevatedCard(
                 modifier = cardMod,
                 colors = CardDefaults.elevatedCardColors(containerColor = headerColor)
@@ -197,6 +212,7 @@ fun PantallaDetalleIncidencia(
                 }
             }
 
+            /** Información de Clasificación y Categoría */
             ElevatedCard(
                 modifier = cardMod,
                 colors = CardDefaults.elevatedCardColors(
@@ -219,6 +235,7 @@ fun PantallaDetalleIncidencia(
                 }
             }
 
+            /** Sección Multimedia: Foto adjunta */
             if (!incidencia.fotoUri.isNullOrBlank()) {
                 ElevatedCard(
                     modifier = Modifier.fillMaxWidth(),
@@ -244,6 +261,7 @@ fun PantallaDetalleIncidencia(
                 }
             }
 
+            /** Sección de Ubicación con integración de Google Maps */
             if (incidencia.latitud != null && incidencia.longitud != null) {
                 ElevatedCard(
                     modifier = cardMod,
@@ -286,6 +304,7 @@ fun PantallaDetalleIncidencia(
                 }
             }
 
+            /** FLUJO CIUDADANO: Comentarios de la Administración */
             if (!esAdmin) {
                 if (incidencia.comentarioAdmin.isNotBlank()) {
                     ElevatedCard(
@@ -317,6 +336,7 @@ fun PantallaDetalleIncidencia(
                 return@Column
             }
 
+            /** FLUJO ADMIN: Consola de Gestión Operativa */
             ElevatedCard(
                 modifier = cardMod,
                 colors = CardDefaults.elevatedCardColors(
@@ -341,6 +361,7 @@ fun PantallaDetalleIncidencia(
 
                     Text("Cambiar estado", style = MaterialTheme.typography.bodyMedium)
 
+                    // Matriz de botones de cambio de estado
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -399,6 +420,7 @@ fun PantallaDetalleIncidencia(
     }
 }
 
+/** Organizador de indicadores visuales (Chips) en la cabecera */
 @Composable
 private fun FlowRowChipsDetalle(
     estado: EstadoIncidencia,
@@ -417,6 +439,7 @@ private fun FlowRowChipsDetalle(
     }
 }
 
+/** Chip especializado para mostrar el estado con colores semánticos */
 @Composable
 private fun ChipEstado(estado: EstadoIncidencia) {
     val (container, label) = when (estado) {
@@ -448,6 +471,7 @@ private fun ChipEstado(estado: EstadoIncidencia) {
     )
 }
 
+/** Chip para visualizar la gravedad del reporte */
 @Composable
 private fun ChipGravedad(gravedad: Gravedad) {
     val (container, label) = when (gravedad) {
@@ -477,6 +501,7 @@ private fun ChipGravedad(gravedad: Gravedad) {
 
 private enum class ChipEtiquetaKind { Neutral, Danger }
 
+/** Chip genérico para etiquetas informativas adicionales */
 @Composable
 private fun ChipEtiqueta(text: String, kind: ChipEtiquetaKind) {
     val (container, label) = when (kind) {
@@ -502,6 +527,7 @@ private fun ChipEtiqueta(text: String, kind: ChipEtiquetaKind) {
     )
 }
 
+/** Función de extensión para compactar nombres de estado largos en la interfaz */
 private fun EstadoIncidencia.textoChip(): String =
     when (this) {
         EstadoIncidencia.EN_REVISION -> "En rev."

@@ -16,6 +16,20 @@ import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.safeDrawing
 
+
+/**
+ * Pantalla de inicio personalizada para usuarios con rol CIUDADANO.
+ * * Actúa como el centro neurálgico para la interacción del ciudadano con el sistema.
+ * Sus funciones principales incluyen:
+ * 1. Acceso directo al formulario de creación de incidencias.
+ * 2. Consulta del historial de reportes propios ("Mis incidencias").
+ * 3. Gestión de preferencias estéticas (Modo Oscuro).
+ * 4. Finalización segura de la sesión.
+ * * @param irACrearIncidencia Callback para navegar al formulario de reporte.
+ * @param irAMisIncidencias Callback para visualizar la lista de reportes del usuario.
+ * @param alCerrarSesion Callback para retornar al flujo de login tras limpiar la sesión.
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PantallaInicioSesion(
@@ -23,6 +37,7 @@ fun PantallaInicioSesion(
     irAMisIncidencias: () -> Unit,
     alCerrarSesion: () -> Unit
 ) {
+    // ... (Inicialización de gestores)
     val contexto = LocalContext.current
     val gestorSesion = remember { GestorSesion(contexto) }
     val scope = rememberCoroutineScope()

@@ -12,6 +12,15 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.cadizaccesible.data.reports.Incidencia
 
+/**
+ * Componente visual diseñado para mostrar un resumen de una [Incidencia] en una lista.
+ * * La tarjeta organiza la información para que los detalles críticos (título, estado, urgencia)
+ * sean visibles de un vistazo. Incluye soporte para imágenes remotas o locales mediante Coil.
+ * * @param incidencia El objeto de datos con la información del reporte.
+ * @param onClick Callback que se dispara al pulsar la tarjeta, devolviendo el ID de la incidencia.
+ * @param modifier [Modifier] para ajustar el diseño exterior de la tarjeta.
+ * @param mostrarMiniatura Si es true y existe una URI de foto, muestra una imagen cuadrada a la derecha.
+ */
 @Composable
 fun TarjetaIncidencia(
     incidencia: Incidencia,
@@ -32,6 +41,7 @@ fun TarjetaIncidencia(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top
         ) {
+            // Columna principal con la información textual
             Column(Modifier.weight(1f)) {
                 Text(
                     text = incidencia.titulo,
@@ -52,6 +62,7 @@ fun TarjetaIncidencia(
 
                 Spacer(Modifier.height(10.dp))
 
+                // Fila de indicadores (Chips) de estado y prioridad
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -59,6 +70,7 @@ fun TarjetaIncidencia(
                     StatusChip(
                         text = incidencia.estado.name,
                         kind = when {
+                            // Lógica semántica para colorear el estado
                             incidencia.estado.name.contains("RESUEL", ignoreCase = true) -> StatusKind.Success
                             incidencia.estado.name.contains("PEND", ignoreCase = true) -> StatusKind.Warning
                             else -> StatusKind.Neutral
@@ -76,6 +88,7 @@ fun TarjetaIncidencia(
 
                 Spacer(Modifier.height(10.dp))
 
+                // Ubicación de la incidencia
                 Text(
                     text = incidencia.direccionTexto.ifBlank { "Sin dirección" },
                     style = MaterialTheme.typography.bodySmall,
@@ -85,13 +98,14 @@ fun TarjetaIncidencia(
                 )
             }
 
+            // Imagen lateral (Miniatura)
             if (mostrarMiniatura && !incidencia.fotoUri.isNullOrBlank()) {
                 AsyncImage(
                     model = incidencia.fotoUri,
-                    contentDescription = "Miniatura",
+                    contentDescription = "Miniatura de la incidencia",
                     modifier = Modifier
                         .size(92.dp),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Crop // Recorta la imagen para llenar el cuadrado
                 )
             }
         }
