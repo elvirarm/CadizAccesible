@@ -827,7 +827,7 @@ Esta documentación permite entender rápidamente cómo se almacena y recupera l
 
 ### ✅ RA6.e – Manual de usuario y guía de referencia
 
- 👉 [Ver Manual de Usuario](Manual_Usuario.md)
+ 👉 [Ver Manual de Usuario](ManualUsuario.md)
 
 
 El proyecto incluye un **manual de usuario** integrado en el propio repositorio, accesible desde el README, redactado en un lenguaje claro y no técnico.
@@ -845,7 +845,7 @@ El objetivo del manual es que cualquier usuario pueda entender cómo utilizar la
 
 ### ✅ RA6.f – Manual técnico de instalación y configuración
 
-👉 [Ver Manual Técnico](Manual_Tecnico.md)
+👉 [Ver Manual Técnico](ManualTecnico.md)
 
 Junto al manual de usuario, el proyecto incorpora un **manual técnico**, también incluido en el repositorio, orientado a desarrolladores o personal técnico.
 
