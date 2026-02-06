@@ -25,11 +25,66 @@ Por este motivo, la elección de herramientas no ha sido arbitraria, sino direct
 
 **Jetpack Compose y Material 3** son la base de toda la interfaz. En una app donde las incidencias cambian de estado (creada, en revisión, rechazada, resuelta) y los informes se recalculan constantemente, trabajar por estados es fundamental. Gracias a Compose, cuando cambia el estado expuesto por el ViewModel, la pantalla se recompone automáticamente sin tener que refrescar manualmente la UI. Esto se aprecia especialmente en la pantalla de Informes y en las listas de incidencias.
 
+```kotlin
+val distEstados by vm.distEstados.collectAsState()
+val ui by vm.ui.collectAsState()
+
+FiltroEstadoPro(
+    seleccionado = ui.filtroEstado,
+    onSelected = { vm.setFiltroEstado(it) }
+)
+
+GraficoBarras(
+    etiquetas = EstadoIncidencia.values().map { it.textoUI() },
+    valores = EstadoIncidencia.values().map { e ->
+        distEstados.firstOrNull { it.estado == e }?.total ?: 0
+    }
+)
+```
+
 La navegación se gestiona con **Navigation Compose** desde un único punto (`HostNavegacion.kt`). Esta decisión es clave porque la app tiene dos roles claramente diferenciados (CIUDADANO y ADMIN). Centralizando el `NavHost` puedo controlar desde el inicio qué pantallas son accesibles según el rol y evitar que un usuario sin sesión acceda a pantallas protegidas.
+
+```kotlin
+val sesion by gestorSesion.flujoSesion.collectAsState(initial = null)
+
+NavHost(
+    navController = nav,
+    startDestination = Rutas.Splash.ruta
+) {
+    composable(Rutas.Login.ruta) {
+        PantallaLogin { rol ->
+            if (rol == RolUsuario.ADMIN)
+                nav.navigate(Rutas.InicioAdmin.ruta)
+            else
+                nav.navigate(Rutas.InicioCiudadano.ruta)
+        }
+    }
+}
+```
 
 Para la persistencia local he utilizado **Room**, ya que la aplicación necesita mantener las incidencias incluso al cerrar la app y generar estadísticas reales. En `IncidenciaDao.kt` no solo se realizan operaciones CRUD, sino consultas de agregación (`COUNT` y `GROUP BY`) que permiten calcular totales y distribuciones directamente desde la base de datos, lo que resulta más eficiente que procesar los datos en memoria.
 
+```kotlin
+@Query("""
+    SELECT estado AS estado, COUNT(*) AS total
+    FROM incidencias
+    GROUP BY estado
+""")
+fun distribucionPorEstado(): Flow<List<ConteoEstado>>
+```
+
 La reactividad se gestiona mediante **Kotlin Flow y StateFlow**. Room emite los datos como `Flow` y el ViewModel los combina con los filtros seleccionados por el usuario. Por ejemplo, en `InformesViewModel.kt` uso `combine` y `flatMapLatest` para que, al cambiar un chip de estado o gravedad, los listados y gráficos se actualicen automáticamente sin botones de búsqueda adicionales.
+
+```kotlin
+val resumenFiltrado =
+    ui.flatMapLatest { f ->
+        when {
+            f.filtroEstado != null -> repo.totalPorEstado(f.filtroEstado)
+            f.filtroGravedad != null -> repo.totalPorGravedad(f.filtroGravedad)
+            else -> repo.totalIncidencias()
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+```
 
 Otras librerías complementan funcionalidades clave del proyecto:
 - **Coil** para la carga eficiente de imágenes de incidencias.
@@ -48,6 +103,31 @@ La interfaz de CádizAccesible no se ha diseñado como un conjunto de pantallas 
 La navegación está centralizada y mantiene siempre una estructura coherente mediante Material 3, lo que garantiza que botones, tarjetas y barras de navegación sigan el mismo criterio visual en toda la aplicación. El usuario siempre sabe en qué pantalla se encuentra y cómo volver atrás.
 
 El formulario de creación de incidencias (`PantallaCrearIncidencia.kt`) es la pantalla más compleja a nivel de interfaz. Para evitar una experiencia caótica, la información se organiza en bloques claros mediante `ElevatedCard`. Las categorías y niveles de gravedad se seleccionan mediante `FilterChip` dentro de un `FlowRow`, permitiendo que la interfaz se adapte automáticamente al ancho del dispositivo.
+
+```kotlin
+ElevatedCard(
+    modifier = Modifier.fillMaxWidth()
+) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Gravedad", style = MaterialTheme.typography.titleMedium)
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Gravedad.values().forEach { g ->
+                FilterChip(
+                    selected = gravedad == g,
+                    onClick = { gravedad = g },
+                    label = { Text(g.name) }
+                )
+            }
+        }
+    }
+}
+```
 
 Las pantallas de listado (`PantallaMisIncidencias.kt` y `PantallaBandejaAdmin.kt`) están pensadas para la gestión rápida. El ciudadano puede eliminar incidencias mediante gestos, mientras que el administrador puede cambiar estados directamente con un swipe, evitando menús adicionales.
 
@@ -169,7 +249,26 @@ Este enfoque reduce la carga cognitiva y permite que la aplicación sea usable e
 
 La interacción por voz está integrada de forma clara y realista en la aplicación, no como una funcionalidad experimental.
 
-Se utiliza la API estándar de Android `RecognizerIntent`, encapsulada dentro de un componente reutilizable llamado `CampoTextoConVoz.kt`. Este componente permite dictar texto en campos clave como:
+Se utiliza la API estándar de Android `RecognizerIntent`, encapsulada dentro de un componente reutilizable llamado `CampoTextoConVoz.kt`.
+
+```kotlin
+
+OutlinedTextField(
+    value = value,
+    onValueChange = onValueChange,
+    label = { Text(label) },
+    trailingIcon = {
+        if (habilitarVoz) {
+            VoiceInputButton { texto ->
+                val nuevo = if (anexarDictado) "$value $texto".trim() else texto.trim()
+                onValueChange(nuevo)
+            }
+        }
+    }
+)
+```
+
+Este componente permite dictar texto en campos clave como:
 
 - Título de la incidencia  
 - Descripción del problema  
@@ -190,6 +289,24 @@ En los listados de incidencias, el gesto de deslizamiento lateral (*swipe*) perm
 
 - En la vista del ciudadano, el swipe elimina una incidencia.  
 - En la vista del administrador, el mismo gesto se reutiliza para cambiar el estado de la incidencia (**En revisión / Rechazada**).
+
+```kotlin
+val estadoSwipe = rememberDismissState(
+    confirmStateChange = { valor ->
+        if (valor == DismissValue.DismissedToStart) {
+            scope.launch { repo.eliminarIncidencia(incidencia.id) }
+            true
+        } else false
+    }
+)
+
+SwipeToDismiss(
+    state = estadoSwipe,
+    directions = setOf(DismissDirection.EndToStart),
+    background = { FondoSwipeEliminar(estadoSwipe.dismissDirection) },
+    dismissContent = { TarjetaIncidencia(incidencia) { id -> alAbrirDetalle(id) } }
+)
+```
 
 Esta interacción se apoya en señales visuales claras (colores e iconos) que indican al usuario la acción que se va a ejecutar antes de completarla, evitando errores. El gesto resulta natural porque imita comportamientos ya asumidos en aplicaciones móviles modernas y reduce el número de pasos necesarios para gestionar incidencias.
 
@@ -246,6 +363,24 @@ Como librería visual se ha utilizado **Material 3**, aprovechando componentes o
 
 Para contenedores flexibles se han utilizado **Slot APIs**, como en el componente `AppCard.kt`, donde el contenedor gestiona el estilo y la estructura mientras que el contenido interno se define desde la pantalla que lo consume. Esta técnica permite reutilizar el mismo componente en contextos muy distintos sin duplicar código.
 
+```kotlin
+@Composable
+fun AppCard(
+    title: String? = null,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    ElevatedCard(modifier = modifier) {
+        Column(modifier = Modifier.padding(Dimens.CardPadding)) {
+            if (title != null) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+            }
+            content()
+        }
+    }
+}
+```
+
 En el caso de los informes, se ha utilizado la API `Canvas` de Compose para crear gráficos personalizados (`GraficoBarras.kt`), evitando dependencias externas y permitiendo un control total sobre el dibujo, los colores y el escalado.
 
 Además, se ha integrado **Coil** para la carga asíncrona de imágenes y `FlowRow` para el diseño adaptativo de chips, facilitando interfaces que se ajustan automáticamente al tamaño de pantalla.
@@ -277,6 +412,16 @@ Los componentes han sido diseñados con parámetros bien definidos y valores por
 
 En `TarjetaIncidencia`, el parámetro `mostrarMiniatura: Boolean = true` permite reutilizar el componente tanto en listados visuales como en modos más compactos simplemente cambiando un valor.
 
+```kotlin
+@Composable
+fun TarjetaIncidencia(
+    incidencia: Incidencia,
+    onClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    mostrarMiniatura: Boolean = true
+)
+```
+
 En `CampoTextoConVoz`, parámetros como `singleLine`, `minLines` o `anexarDictado` permiten usar el mismo componente para títulos cortos, descripciones largas o campos de respuesta del administrador.
 
 El uso consistente de valores por defecto facilita la lectura del código, reduce errores y permite que los componentes sean flexibles sin perder claridad.
@@ -289,25 +434,66 @@ Los componentes no gestionan directamente la lógica de negocio, sino que notifi
 
 Por ejemplo, `TarjetaIncidencia` emite un evento `onClick(id)` cuando el usuario pulsa sobre ella, pero no decide la navegación. Es la pantalla o el `NavHost` quien interpreta ese evento y ejecuta la acción correspondiente.
 
+```kotlin
+@Composable
+fun TarjetaIncidencia(
+    incidencia: Incidencia,
+    onClick: (String) -> Unit
+) {
+    ElevatedCard(
+        onClick = { onClick(incidencia.id) }
+    ) {
+        Text(incidencia.titulo)
+    }
+}
+```
+
 En `CampoTextoConVoz`, el componente gestiona internamente la coordinación entre escritura manual y dictado por voz, pero siempre comunica el resultado final mediante `onValueChange`, manteniendo una interacción fluida y coherente.
 
 Esta gestión de eventos permite que los componentes sean reutilizables, fáciles de probar y completamente desacoplados del contexto en el que se usan.
 
 ---
 
-### ✅ RA3.f – Documentación de componentes
+## ✅ RA3.f – Documentación de componentes
 
-El proyecto incluye una documentación clara y estructurada de los componentes principales, detallando su responsabilidad y ubicación dentro del código.
+Todo el código fuente del proyecto ha sido documentado siguiendo una metodología clara, homogénea y estructurada, utilizando **KDoc**, el estándar oficial de documentación en el lenguaje Kotlin.
 
-Se ha elaborado un catálogo de componentes que identifica:
+La documentación KDoc se ha aplicado de forma sistemática a los principales **componentes de la aplicación**, especialmente a las pantallas desarrolladas con Jetpack Compose y a los elementos clave de la lógica de presentación. Para cada componente documentado se especifica:
 
-- El nombre del componente.
-- El archivo donde se encuentra.
-- Su función dentro de la aplicación.
-- Las pantallas donde se utiliza.
+- El **nombre del componente**.
+- El **archivo** donde se encuentra implementado.
+- Su **responsabilidad principal** dentro de la aplicación.
+- Las **funcionalidades** que centraliza.
+- Los **parámetros de entrada**, indicando claramente su finalidad y uso.
 
-Esta documentación facilita el mantenimiento del proyecto y permite que otros desarrolladores comprendan rápidamente la estructura del sistema de componentes.
+Esta metodología permite disponer de un **catálogo de componentes integrado directamente en el código fuente**, facilitando que otros desarrolladores puedan comprender rápidamente la estructura del proyecto, localizar responsabilidades y mantener o extender la aplicación de forma segura.
 
+A continuación se muestra un ejemplo representativo de documentación KDoc utilizada en una de las pantallas principales del proyecto, correspondiente al panel de inicio del rol Administrador:
+
+```kotlin
+/**
+ * Panel de control principal para el rol de Administrador.
+ *
+ * Esta pantalla centraliza las funcionalidades de gestión técnica:
+ * 1. Acceso a la bandeja global de incidencias para revisión y cambio de estados.
+ * 2. Visualización de informes estadísticos sobre la accesibilidad urbana.
+ * 3. Configuración de preferencias locales (Modo Oscuro).
+ * 4. Gestión del ciclo de vida de la sesión administrativa.
+ *
+ * @param irABandeja Navega al listado completo de incidencias de la ciudad.
+ * @param irAInformes Navega a la sección de analítica y gráficos.
+ * @param alCerrarSesion Callback para redirigir al flujo de login tras limpiar credenciales.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PantallaInicioAdmin(
+    irABandeja: () -> Unit,
+    irAInformes: () -> Unit,
+    alCerrarSesion: () -> Unit
+) {
+    // ... (Inicialización de gestores y estados)
+}
+```
 ---
 
 ### ✅ RA3.h – Integración de los componentes en la aplicación
@@ -472,39 +658,50 @@ Esta estructura reduce la carga cognitiva y permite al administrador pasar de un
 
 ### ✅ RA5.b – Generación de informes a partir de fuentes de datos
 
-Los informes se generan directamente a partir de los datos persistidos en **Room**, sin utilizar datos simulados ni cálculos manuales en la interfaz.
+Los informes se generan directamente a partir de los datos persistidos en **Room**, sin utilizar datos simulados ni realizar cálculos manuales en la capa de interfaz.
 
-La base de datos actúa como **fuente única de verdad**, y las consultas necesarias para los informes se realizan mediante SQL agregado en el DAO. Esto permite obtener recuentos y totales de forma eficiente y coherente.
+La base de datos actúa como **fuente única de verdad**, y las métricas necesarias para el sistema de informes se obtienen mediante **consultas SQL agregadas** definidas en el DAO. Este enfoque permite calcular recuentos y distribuciones de forma eficiente, delegando el procesamiento a la base de datos y evitando cargar lógica innecesaria en la UI.
 
-Ejemplos de consultas utilizadas en `IncidenciaDao.kt`:
+A continuación se muestran ejemplos reales de consultas utilizadas en `IncidenciaDao.kt` para la generación de informes.
 
 ```kotlin
-@Query("SELECT COUNT(*) FROM incidencias WHERE urgente = 1")
-fun getTotalUrgentes(): Flow<Int>
+@Query("SELECT COUNT(*) FROM incidencias")
+fun totalIncidencias(): Flow<Int>
 
-@Query("SELECT COUNT(*) FROM incidencias WHERE estado = :estado")
-fun countByEstado(estado: String): Flow<Int>
+@Query("SELECT COUNT(*) FROM incidencias WHERE esUrgente = 1")
+fun totalUrgentes(): Flow<Int>
 ```
 
-Estas consultas devuelven datos reactivos mediante `Flow`, de modo que cualquier cambio en la base de datos (creación, eliminación o cambio de estado de una incidencia) se refleja automáticamente en el informe sin necesidad de recargar la pantalla.
+Además de los totales simples, el sistema de informes utiliza **consultas de agrupación** para obtener distribuciones completas directamente desde la base de datos, que posteriormente se representan mediante gráficos.
+
+```kotlin
+@Query("""
+    SELECT estado AS estado, COUNT(*) AS total
+    FROM incidencias
+    GROUP BY estado
+""")
+fun distribucionPorEstado(): Flow<List<ConteoEstado>>
+```
+
+Todas estas consultas devuelven datos reactivos mediante **Flow**, de modo que cualquier cambio en la base de datos (creación, eliminación o actualización del estado de una incidencia) se refleja automáticamente en los informes, sin necesidad de recargar manualmente la pantalla ni recalcular los valores en la interfaz.
 
 ---
 
 ### ✅ RA5.c – Filtros sobre los valores a presentar
 
-El sistema de informes incorpora filtros interactivos claros y bien justificados, que permiten al administrador segmentar la información según sus necesidades.
+El sistema de informes incorpora **filtros interactivos** claros y bien justificados, que permiten al administrador segmentar la información según sus necesidades de análisis.
 
-Los filtros se gestionan desde el `InformesViewModel` mediante `MutableStateFlow`, capturando la selección del usuario (estado o gravedad). A partir de ese estado, se modifica dinámicamente la consulta a la base de datos usando el operador `flatMapLatest`.
-
-Ejemplo de lógica de filtrado:
+Los filtros se gestionan desde el `InformesViewModel` mediante **StateFlow**, capturando el estado seleccionado por el usuario (estado o gravedad). A partir de este estado, la consulta activa a la base de datos se modifica dinámicamente utilizando el operador `flatMapLatest`, garantizando que los valores mostrados estén siempre sincronizados con la selección actual.
 
 ```kotlin
-private val _filtroEstado = MutableStateFlow<String?>(null)
-
-val incidenciasFiltradas = _filtroEstado.flatMapLatest { estado ->
-    if (estado == null) repositorio.getAll()
-    else repositorio.getByEstado(estado)
-}
+val resumenFiltrado =
+    ui.flatMapLatest { f ->
+        when {
+            f.filtroEstado != null -> repo.totalPorEstado(f.filtroEstado)
+            f.filtroGravedad != null -> repo.totalPorGravedad(f.filtroGravedad)
+            else -> repo.totalIncidencias()
+        }
+    }
 ```
 
 ## 🏢 Evaluación complementaria del sistema de informes (RA5.f / RA5.g / RA5.h)
@@ -519,9 +716,30 @@ El sistema de informes se ha desarrollado utilizando herramientas propias del ec
 
 La obtención de datos se realiza mediante **Room**, utilizando consultas SQL agregadas para recuentos y distribuciones. Estos resultados se exponen como flujos reactivos mediante `Flow` y `StateFlow`, permitiendo que la información se actualice automáticamente ante cualquier cambio en la base de datos.
 
-Para la generación y representación visual de los informes, se ha utilizado la API `Canvas` de **Jetpack Compose**, desarrollando componentes gráficos personalizados desde cero. Esta elección permite dibujar directamente barras, ejes y etiquetas, adaptando dinámicamente los gráficos a los valores recibidos y manteniendo coherencia con el tema visual de la aplicación.
+Para la generación y representación visual de los informes, se ha utilizado la API `Canvas` de **Jetpack Compose**, desarrollando componentes gráficos personalizados desde cero (`GraficoBarras.kt`). Esta elección permite dibujar directamente el gráfico y adaptar su escalado de forma dinámica en función de los valores recibidos, manteniendo coherencia con el tema visual de la aplicación.
 
-El uso de `Canvas`, junto con Jetpack Compose, proporciona un control total sobre el diseño, la accesibilidad visual y el comportamiento de los gráficos, sin depender de librerías externas, lo que facilita la integración y el mantenimiento del sistema de informes.
+```kotlin
+val maxV = (safeValores.maxOrNull() ?: 0).coerceAtLeast(1)
+
+fun yFor(v: Int): Float {
+    val ratio = v.toFloat() / maxV.toFloat()
+    return yBase - (ratio * chartH)
+}
+
+safeValores.forEachIndexed { i, v ->
+    val ratio = v.toFloat() / maxV.toFloat()
+    val barH = ratio * chartH
+
+    if (barH > 0f) {
+        drawRoundRect(
+            color = barColor,
+            topLeft = Offset(x, yBase - barH),
+            size = Size(barW, barH),
+            cornerRadius = CornerRadius(12f, 12f)
+        )
+    }
+}
+```
 
 ---
 
@@ -757,22 +975,38 @@ Este enfoque permite separar pruebas, lanzamiento estable y distribución altern
 
 ## 🧪 RA8 – Pruebas avanzadas
 
-En este apartado se describen las pruebas realizadas sobre CádizAccesible con el objetivo de validar la estabilidad de la aplicación, la corrección de la lógica de negocio y el correcto funcionamiento del acceso a datos y ViewModels. Las pruebas se han ejecutado utilizando el sistema de testing integrado de Android Studio, combinando **tests instrumentados** y **tests unitarios**.
+En este apartado se describen las pruebas realizadas sobre CádizAccesible con el objetivo de validar la estabilidad de la aplicación, la corrección de la lógica de negocio y el correcto funcionamiento del acceso a datos y ViewModels. Las pruebas se han ejecutado utilizando el sistema de testing integrado de Android Studio, combinando **tests instrumentados** (Room en memoria) y **tests unitarios** (ViewModels con flujos).
 
 ---
 
 ### ✅ RA8.c – Pruebas de regresión
 
-Se han implementado pruebas de regresión reales para asegurar que los cambios introducidos en la aplicación no afectan negativamente a funcionalidades ya existentes.
+Se han implementado pruebas de regresión reales para asegurar que los cambios introducidos en la aplicación no afectan negativamente a funcionalidades ya existentes. Estas pruebas cubren:
 
-Estas pruebas se centran principalmente en:
-
-- Operaciones CRUD sobre incidencias.
+- Operaciones CRUD sobre incidencias (insertar, consultar, borrar).
 - Actualización de estados y comentarios.
 - Cálculo de métricas e informes.
-- Comportamiento de los ViewModels ante cambios en los datos.
+- Comportamiento de los ViewModels ante cambios en los datos y filtros.
 
-Las pruebas se han ejecutado tras modificaciones en la base de datos y en la lógica de negocio, verificando que los resultados siguen siendo correctos y coherentes.
+**Ejemplo representativo (DAO – actualización de estado y comentario en Room):**
+
+```kotlin
+@Test
+fun actualizarEstado_actualiza_estado_y_comentario() = runBlocking {
+    dao.insertar(entityEjemplo(id = "C1", estado = EstadoIncidencia.PENDIENTE))
+
+    dao.actualizarEstado(
+        id = "C1",
+        estado = EstadoIncidencia.EN_REVISION,
+        comentario = "Revisando"
+    )
+
+    val entity = dao.obtenerPorId("C1")
+    assertNotNull(entity)
+    assertEquals(EstadoIncidencia.EN_REVISION, entity?.estado)
+    assertEquals("Revisando", entity?.comentarioAdmin)
+}
+```
 
 **Evidencias:**
 
@@ -787,54 +1021,84 @@ Todos los tests se ejecutan correctamente, confirmando que las funcionalidades p
 
 ### ✅ RA8.d – Pruebas de volumen y estrés
 
-Para evaluar el comportamiento de la aplicación con conjuntos de datos más amplios, se han realizado pruebas que simulan escenarios con múltiples incidencias registradas en la base de datos.
-
-Estas pruebas permiten comprobar:
+Para evaluar el comportamiento del sistema con conjuntos de datos más amplios, se han realizado pruebas que simulan escenarios con múltiples incidencias en la base de datos. Estas pruebas verifican:
 
 - Que los listados devuelven correctamente todos los elementos esperados.
 - Que los recuentos y distribuciones por estado o gravedad se calculan correctamente incluso con varios registros.
-- Que los ViewModels gestionan correctamente los flujos de datos sin errores ni bloqueos.
+- Que el acceso a datos y los flujos reactivos se mantienen estables ante un mayor volumen de información.
 
-El uso de `LazyColumn`, consultas agregadas en Room y flujos reactivos garantiza que el rendimiento se mantiene estable incluso cuando el número de incidencias aumenta.
+Ejemplo representativo (repositorio + Room en memoria, distribución por estado con varios registros):
+
+```kotlin
+@Test
+fun distribucionPorEstado_emite_conteos() = runBlocking {
+    insertarEntity("1", estado = EstadoIncidencia.PENDIENTE)
+    insertarEntity("2", estado = EstadoIncidencia.EN_REVISION)
+    insertarEntity("3", estado = EstadoIncidencia.EN_REVISION)
+
+    val dist = repo.distribucionPorEstado().first()
+
+    val enRev = dist.firstOrNull { it.estado == EstadoIncidencia.EN_REVISION }?.total ?: 0
+    val pend = dist.firstOrNull { it.estado == EstadoIncidencia.PENDIENTE }?.total ?: 0
+
+    assertEquals(2, enRev)
+    assertEquals(1, pend)
+}
+```
 
 ---
 
 ### ✅ RA8.e – Pruebas de seguridad funcional
 
-Aunque se trata de una aplicación sin backend remoto, se han validado aspectos clave de **seguridad funcional** mediante pruebas indirectas sobre la lógica de acceso y gestión de datos.
+Aunque la aplicación no incorpora backend remoto, se han validado aspectos clave de **seguridad funcional** mediante pruebas sobre la lógica de actualización y el comportamiento esperado ante errores.
 
-Entre las comprobaciones realizadas destacan:
+Se comprueba que:
 
-- Verificación de que las operaciones de actualización y borrado solo afectan a las incidencias esperadas.
-- Comprobación de que los ViewModels gestionan correctamente los datos según el contexto (por ejemplo, detalle de incidencia frente a listados).
-- Validación de que las pantallas de gestión e informes dependen de la lógica de rol definida en la aplicación.
+- Las actualizaciones afectan únicamente a la incidencia indicada por ID.
+- El ViewModel gestiona correctamente fallos de actualización, evitando estados inconsistentes.
+- La UI recibe un estado coherente de error y se desactiva el indicador de “actualizando”.
 
-Estas pruebas aseguran que la aplicación mantiene un comportamiento coherente y predecible, evitando accesos indebidos o estados inconsistentes.
+Ejemplo representativo (fallo al actualizar y estado consistente en el ViewModel):
+
+```kotlin
+@Test
+fun `si actualizar falla muestra error y actualizando vuelve a false`() = runTest {
+    whenever(dao.obtenerPorId(eq(ID))).thenReturn(entity(id = ID))
+    whenever(dao.actualizarEstado(any(), any(), any())).thenThrow(RuntimeException("boom"))
+
+    val vm = DetalleIncidenciaViewModel(repo, ID)
+    dispatcher.scheduler.advanceUntilIdle()
+
+    vm.cambiarEstado(EstadoIncidencia.RECHAZADA)
+    dispatcher.scheduler.advanceUntilIdle()
+
+    assertFalse(vm.ui.value.actualizando)
+    assertEquals("No se pudo actualizar el estado.", vm.ui.value.error)
+}
+```
 
 ---
 
 ### ✅ RA8.f – Uso de recursos y eficiencia
 
-Las pruebas realizadas también permiten evaluar indirectamente el uso de recursos de la aplicación.
+Las pruebas realizadas permiten evaluar indirectamente el uso eficiente de recursos:
 
-Se ha verificado que:
+- El acceso a datos se realiza mediante **Room** y **Flow**, evitando bloqueos del hilo principal.
+- Los cálculos derivados (totales y porcentajes) se ejecutan en **ViewModels** y se validan mediante tests.
+- El uso de **StandardTestDispatcher** y **Turbine** garantiza un control determinista de emisiones y estados en flujos reactivos.
 
-- El acceso a base de datos se realiza mediante Room y `Flow`, evitando bloqueos del hilo principal.
-- Las operaciones de cálculo (totales, distribuciones, porcentajes) se ejecutan en los ViewModels, manteniendo la UI ligera.
-- La carga de imágenes se gestiona de forma asíncrona mediante Coil, reduciendo el consumo de memoria.
-
-La ejecución completa de las baterías de pruebas sin errores ni bloqueos confirma que la aplicación hace un uso eficiente de CPU y memoria dentro de su alcance funcional.
+Como ejemplo, el cálculo reactivo del **porcentaje de incidencias urgentes** se valida en `InformesViewModelTest` utilizando un *dataset* controlado, confirmando que las métricas derivadas son correctas y estables ante cambios en los datos.
 
 ---
 
 ### 📊 Resumen de pruebas ejecutadas
 
-| Tipo de prueba | Clase                              | Objetivo                                               |
-|---------------|------------------------------------|--------------------------------------------------------|
-| DAO           | `IncidenciaDaoTest`                | Validación de consultas SQL y persistencia              |
-| Repositorio   | `RepositorioIncidenciasRoomTest`   | Integridad de la lógica de acceso a datos               |
-| ViewModel     | `InformesViewModelTest`            | Cálculo correcto de métricas e informes                 |
-| ViewModel     | `DetalleIncidenciaViewModelTest`   | Gestión del estado y detalle de incidencias             |
+| Tipo de prueba | Clase                              | Objetivo                                                                 |
+|---------------|------------------------------------|--------------------------------------------------------------------------|
+| DAO (Room)    | `IncidenciaDaoTest`                | Validación de consultas, CRUD y agregados (`COUNT`, `GROUP BY`)           |
+| Repositorio   | `RepositorioIncidenciasRoomTest`   | Integridad de la lógica de acceso a datos sobre Room en memoria           |
+| ViewModel     | `InformesViewModelTest`            | Cálculo correcto de métricas, filtros y flujos (`StateFlow`)              |
+| ViewModel     | `DetalleIncidenciaViewModelTest`   | Gestión de estado (carga, error, actualización) y cambios de incidencia  |
 
 ---
 
