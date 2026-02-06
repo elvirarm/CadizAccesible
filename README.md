@@ -865,6 +865,8 @@ Este manual permite instalar, comprender y mantener el proyecto de forma ordenad
 
 Como apoyo adicional a los manuales, se ha creado un **vídeo explicativo** en el que se muestra el funcionamiento general de la aplicación y sus principales flujos de uso.
 
+👉 [Ver vídeo de demostración](https://youtu.be/NAn55LiIwYE)
+
 Este vídeo sirve como introducción visual para comprender rápidamente:
 
 - Cómo se crea una incidencia.
