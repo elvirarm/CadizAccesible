@@ -32,55 +32,70 @@ El proyecto ha sido desarrollado íntegramente en el ecosistema Android moderno.
 
 ## 3. Arquitectura del proyecto
 
-La aplicación sigue una arquitectura **MVVM**, separando claramente responsabilidades:
+### 3.1 Visión general de la arquitectura
 
-### 3.1 Capa de Datos (Data)
-
-Responsable del acceso y persistencia de la información.
-
-- **Room Database:** Define la estructura de la base de datos local.
-- **Entities:** Representan las tablas de la base de datos.
-- **DAO (Data Access Object):** Contiene las consultas SQL.
-- **Repositorio:** Actúa como intermediario entre la base de datos y los ViewModels.
-
-Esta separación permite modificar la fuente de datos sin afectar a la interfaz.
+```
+UI (Jetpack Compose)
+↓ observa
+ViewModel (StateFlow)
+↓ solicita
+Repository
+↓ accede
+Room (DAO → SQLite)
+```
 
 ---
 
-### 3.2 Capa de Lógica (ViewModel)
+### 3.2 Capa de Datos (Data)
+
+Responsable del acceso, almacenamiento y gestión de la información persistente.
+
+Incluye:
+- **Room Database:** Define la estructura de la base de datos local.
+- **Entities:** Representan las tablas de la base de datos.
+- **DAO (Data Access Object):** Contienen las consultas SQL.
+- **Repositorio:** Actúa como intermediario entre la base de datos y los ViewModels.
+
+Esta capa permite modificar la fuente de datos (por ejemplo, añadir un backend remoto en el futuro) sin afectar a la interfaz.
+
+---
+
+### 3.3 Capa de Lógica (ViewModel)
 
 Los ViewModels gestionan el estado de la aplicación y la lógica de negocio.
 
 Funciones principales:
 - Exponer datos a la UI mediante `StateFlow`.
-- Aplicar filtros y cálculos.
+- Aplicar filtros y transformaciones.
+- Realizar cálculos de métricas e informes.
 - Coordinar operaciones asíncronas.
 - Evitar que la interfaz contenga lógica compleja.
 
-Ejemplo de responsabilidades:
-- Filtrado de incidencias.
-- Cálculo de métricas e informes.
-- Gestión de estados.
+Ejemplos de responsabilidades:
+- Filtrado de incidencias por estado o gravedad.
+- Cálculo de estadísticas e informes.
+- Gestión coherente de estados de la aplicación.
 
 ---
 
-### 3.3 Capa de Presentación (UI)
+### 3.4 Capa de Presentación (UI)
 
 Implementada completamente con **Jetpack Compose**.
 
-Características:
-- UI declarativa y reactiva.
+Características principales:
+- Interfaz declarativa y reactiva.
 - Reutilización de componentes.
 - Observación de estados mediante `collectAsState()`.
 
-La UI no accede directamente a la base de datos; consume únicamente los estados expuestos por los ViewModels.
+La UI no accede directamente a la base de datos ni contiene lógica de negocio; se limita a representar el estado proporcionado por los ViewModels.
 
 ---
 
 ## 4. Estructura del proyecto
 
-Organización típica del código:
+La siguiente estructura refleja la organización por capas del proyecto:
 
+```
 com.example.cadizaccesible
 │
 ├── data
@@ -99,6 +114,7 @@ com.example.cadizaccesible
 ├── viewmodel
 │
 └── test
+```
 
 Esta estructura favorece la escalabilidad y el mantenimiento.
 
@@ -112,17 +128,19 @@ La base de datos local se define mediante `AppDatabase.kt` y utiliza Room como c
 
 Características:
 - Persistencia local incluso sin conexión.
-- Validación en tiempo de compilación de consultas.
-- Integración directa con Flow.
+- Validación de consultas en tiempo de compilación.
+- Integración directa con `Flow` para datos reactivos.
+
+Esta elección es especialmente relevante en un entorno urbano, donde la conectividad puede no ser constante.
 
 ---
 
 ### 5.2 Entidades
 
-Las entidades representan los modelos persistentes, por ejemplo:
+Las entidades representan los modelos persistentes del sistema, por ejemplo:
 
-- IncidenciaEntity
-- UsuarioEntity
+- `IncidenciaEntity`
+- `UsuarioEntity`
 
 Incluyen:
 - Claves primarias.
@@ -133,19 +151,19 @@ Incluyen:
 
 ### 5.3 DAO y consultas
 
-Los DAO definen consultas SQL, tanto CRUD como agregadas:
+Los DAO definen las consultas SQL, tanto CRUD como agregadas:
 
 - Inserción y eliminación de incidencias.
 - Consultas filtradas por estado o gravedad.
 - Consultas agregadas (`COUNT`, `GROUP BY`) para informes.
 
-Las consultas devuelven `Flow`, permitiendo reactividad automática.
+Las consultas devuelven `Flow`, permitiendo reactividad automática en la interfaz.
 
 ---
 
 ## 6. Programación reactiva
 
-La aplicación utiliza **Kotlin Flow** para gestionar datos reactivos.
+La aplicación utiliza **Kotlin Flow** para la gestión de datos reactivos.
 
 Ventajas:
 - Actualización automática de la interfaz.
@@ -169,7 +187,7 @@ Características:
 - Protección de pantallas mediante control de sesión.
 - Limpieza del back stack con `popUpTo`.
 
-Esto evita accesos no válidos y mejora la coherencia de la experiencia.
+Esto evita accesos no válidos y mejora la coherencia de la experiencia de usuario.
 
 ---
 
@@ -192,16 +210,16 @@ Estos componentes:
 
 ## 9. Entrada natural de usuario (NUI)
 
-La aplicación integra varios mecanismos de interacción natural:
+La aplicación integra distintos mecanismos de interacción natural para mejorar la accesibilidad.
 
 ### 9.1 Entrada por voz
-- Implementada con `RecognizerIntent`.
+- Implementada mediante `RecognizerIntent`.
 - Integrada en componentes reutilizables.
-- Facilita la accesibilidad.
+- Facilita el uso a personas con dificultades de escritura.
 
 ### 9.2 Gestos
 - Uso de `SwipeToDismiss`.
-- Acciones rápidas para gestión de incidencias.
+- Acciones rápidas para la gestión de incidencias.
 
 ### 9.3 Sensores
 - Uso de GPS para ubicación automática.
@@ -230,9 +248,9 @@ Los permisos se solicitan únicamente cuando son necesarios:
 
 - Ubicación: al crear incidencias.
 - Cámara: al adjuntar imágenes.
-- Micrófono: al usar entrada por voz.
+- Micrófono: al utilizar entrada por voz.
 
-Esto mejora la confianza del usuario y cumple buenas prácticas de Android.
+Este enfoque mejora la confianza del usuario y cumple con las buenas prácticas recomendadas por Android.
 
 ---
 
@@ -245,20 +263,22 @@ Se han implementado pruebas para validar el correcto funcionamiento del sistema:
 - Tests de ViewModels.
 
 Estas pruebas verifican:
-- Persistencia correcta.
+- Persistencia correcta de los datos.
 - Cálculos de informes.
-- Gestión de estados.
+- Gestión coherente de estados.
+
+No se han implementado pruebas automatizadas de interfaz, priorizando las pruebas de lógica y persistencia debido al alcance académico del proyecto.
 
 ---
 
 ## 13. Rendimiento y uso de recursos
 
 Decisiones adoptadas:
-- Carga asíncrona de imágenes con Coil.
+- Carga asíncrona de imágenes mediante Coil.
 - Acceso a base de datos fuera del hilo principal.
 - UI reactiva sin bloqueos.
 
-El resultado es una aplicación fluida y estable.
+El resultado es una aplicación fluida, estable y eficiente en el uso de recursos.
 
 ---
 
@@ -270,6 +290,8 @@ Aunque la distribución se realiza en entorno de desarrollo, la aplicación est�
 - Firma digital mediante KeyStore.
 - Publicación en Google Play.
 - Despliegue corporativo mediante MDM.
+
+Estas medidas permiten que el proyecto pueda evolucionar hacia un entorno de producción real sin cambios estructurales significativos.
 
 ---
 
@@ -287,4 +309,4 @@ Aunque la distribución se realiza en entorno de desarrollo, la aplicación est�
 
 El diseño técnico de **CádizAccesible** sigue principios modernos de desarrollo Android, priorizando la separación de responsabilidades, la reactividad y la accesibilidad.
 
-Este manual técnico proporciona la información necesaria para comprender, mantener y ampliar la aplicación de forma estructurada y profesional.
+Este manual técnico proporciona la información necesaria para comprender, mantener y ampliar la aplicación de forma estructurada, profesional y alineada con los criterios de calidad exigidos en el desarrollo de aplicaciones Android actuales.
