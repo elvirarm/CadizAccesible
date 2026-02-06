@@ -253,19 +253,20 @@ Se utiliza la API estándar de Android `RecognizerIntent`, encapsulada dentro de
 
 ```kotlin
 
-OutlinedTextField(
-    value = value,
-    onValueChange = onValueChange,
-    label = { Text(label) },
-    trailingIcon = {
-        if (habilitarVoz) {
-            VoiceInputButton { texto ->
-                val nuevo = if (anexarDictado) "$value $texto".trim() else texto.trim()
+trailingIcon = {
+    if (habilitarVoz) {
+        VoiceInputButton(
+            onTextRecognized = { texto ->
+                val nuevo = if (anexarDictado) {
+                    if (value.isEmpty()) texto.trim() else "$value $texto".trim()
+                } else {
+                    texto.trim()
+                }
                 onValueChange(nuevo)
             }
-        }
+        )
     }
-)
+}
 ```
 
 Este componente permite dictar texto en campos clave como:
@@ -893,7 +894,7 @@ En este proyecto ya se ha realizado una personalización visible: se ha cambiado
 Además, para una entrega final se definirían de forma consistente:
 
 - Nombre visible de la aplicación (*label*).
-- Icono adaptativo completo (foreground / background si aplica).
+- Icono adaptativo completo (foreground con imagen / background color liso).
 - Identidad de paquete estable para que futuras actualizaciones se instalen encima sin conflictos.
 
 ---
@@ -1008,12 +1009,19 @@ fun actualizarEstado_actualiza_estado_y_comentario() = runBlocking {
 }
 ```
 
-**Evidencias:**
+#### 📸 Evidencias
 
-- `RepositorioIncidenciasRoomTest`
-- `IncidenciaDaoTest`
-- `InformesViewModelTest`
-- `DetalleIncidenciaViewModelTest`
+**RepositorioIncidenciasRoomTest – Room en memoria (CRUD + agregados)**  
+![RepositorioIncidenciasRoomTest](docs/tests/TestRepositorioIncidenciasRoom.png)
+
+**IncidenciaDaoTest – DAO y consultas SQL**  
+![IncidenciaDaoTest](docs/tests/TestIncidenciaDao.png)
+
+**InformesViewModelTest – métricas y filtros reactivos**  
+![InformesViewModelTest](docs/tests/InformeViewModelTest.png)
+
+**DetalleIncidenciaViewModelTest – carga, actualización y errores**  
+![DetalleIncidenciaViewModelTest](docs/tests/TestDetalleIncidenciaViewModel.png)
 
 Todos los tests se ejecutan correctamente, confirmando que las funcionalidades principales permanecen estables tras los cambios realizados.
 
@@ -1088,6 +1096,11 @@ Las pruebas realizadas permiten evaluar indirectamente el uso eficiente de recur
 - El uso de **StandardTestDispatcher** y **Turbine** garantiza un control determinista de emisiones y estados en flujos reactivos.
 
 Como ejemplo, el cálculo reactivo del **porcentaje de incidencias urgentes** se valida en `InformesViewModelTest` utilizando un *dataset* controlado, confirmando que las métricas derivadas son correctas y estables ante cambios en los datos.
+
+#### 📸 Evidencias
+
+**Validación de flujos reactivos con Turbine y StandardTestDispatcher**  
+![InformesViewModelTest](docs/tests/InformeViewModelTest.png)
 
 ---
 
